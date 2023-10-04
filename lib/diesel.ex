@@ -2,7 +2,7 @@ defmodule Diesel do
   @moduledoc """
   Elixir DSL builder toolkit.
 
-  DSLs built with this library are actually documents. They look like HTML, and can be extended via components.
+  DSLs built with this library are actually documents. They look like HTML, and can be extended via blocks.
 
   Usage:
 
@@ -10,133 +10,136 @@ defmodule Diesel do
   defmodule MyApp.MyDsl do
     use Diesel,
       otp_app: :my_app,
-      name: :style,
-      components: [
-        MyApp.MyDsl.OneComponent,
-        MyApp.MyDsl.AnotherComponent,
+      root: :style,
+      blocks: [
+        MyApp.MyDsl.OneBlock,
+        MyApp.MyDsl.AnotherBlock,
       ]
   end
   ```
-  Additional components can be specified via application environment. These will be merged with the
-  list of components already declared in the module:
+  Additional blocks can be specified via application environment. These will be merged with the
+  list of blocks already declared in the module:
 
   ```elixir
   config :my_app, MyApp.MyDsl,
-    components: [
-      OtherApp.AThirdComponent
+    blocks: [
+      OtherApp.AThirdBlock
     ]
   ```
   """
 
-  defmacro __using__(opts) do
-    otp_app = Keyword.fetch!(opts, :otp_app)
-    name = Keyword.fetch!(opts, :name)
+  @type tag() :: atom()
+  @type opts() :: keyword() | atom() | module() | binary()
+  @type element() :: {tag(), opts(), [element()]}
 
-    default_components =
+  @doc "The tags supported by the dsl"
+  @callback tags() :: [tag()]
+
+  @doc "The blocks that contribute to the definition of the dsl"
+  @callback blocks() :: [module()]
+
+  @doc "The root tag of the dsl"
+  @callback root() :: tag()
+
+  @doc "Formatter configuration"
+  @callback locals_without_parens() :: keyword()
+
+  @doc "Resolves an element into something else, given a context"
+  @callback resolve(element :: element(), context :: map()) :: any()
+
+  defmacro(__using__(opts)) do
+    otp_app = Keyword.fetch!(opts, :otp_app)
+    root = Keyword.fetch!(opts, :root)
+
+    default_blocks =
       opts
-      |> Keyword.fetch!(:components)
+      |> Keyword.fetch!(:blocks)
       |> Enum.map(fn {_, _, parts} ->
         Module.concat(parts)
       end)
 
-    extra_components =
-      otp_app |> Application.get_env(__MODULE__, []) |> Keyword.get(:components, [])
+    extra_blocks =
+      otp_app
+      |> Application.get_env(__CALLER__.module, [])
+      |> Keyword.get(:blocks, [])
 
-    components = default_components ++ extra_components
-    tags = Enum.flat_map(components, & &1.tags)
+    blocks = default_blocks ++ extra_blocks
+    tags = Enum.flat_map(blocks, & &1.tags)
 
     quote do
-      @name unquote(name)
-      @components unquote(components)
+      @root unquote(root)
+      @blocks unquote(blocks)
       @tags unquote(tags)
-      @before_compile Diesel
+      @behaviour Diesel
 
-      @doc false
+      @impl true
       def tags, do: @tags
 
-      @doc false
-      def name, do: @name
+      @impl true
+      def root, do: @root
 
-      @doc false
-      def components, do: @components
+      @impl true
+      def blocks, do: @blocks
 
-      @doc false
+      @impl true
       def locals_without_parens do
         for tag <- @tags, do: {tag, :*}
       end
 
-      @doc false
-      def resolve(node, args) do
-        Enum.reduce_while(@components, nil, fn component, _ ->
-          case component.resolve(node, args) do
-            {:error, :not_supported, _} = error -> {:cont, error}
-            other -> {:halt, other}
-          end
-        end)
-      end
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    dsl = __CALLER__.module
-
-    [root_macros(dsl) | tags_macros(dsl)]
-  end
-
-  defp root_macros(dsl) do
-    name = Module.get_attribute(dsl, :name)
-
-    quote do
-      defmacro unquote(name)(do: {:__block__, [], children}) do
+      defmacro unquote(root)(do: {:__block__, [], children}) do
         quote do
-          @doc false
           def definition, do: unquote(children)
         end
       end
 
-      defmacro unquote(name)(do: child) do
+      defmacro unquote(root)(do: child) do
         quote do
-          @doc false
           def definition, do: unquote([child])
         end
       end
-    end
-  end
 
-  defp tags_macros(dsl) do
-    dsl
-    |> Module.get_attribute(:tags)
-    |> Enum.map(&tag_macros/1)
-  end
+      unquote_splicing(
+        Enum.map(tags, fn tag ->
+          quote do
+            defmacro unquote(tag)(attrs, do: {:__block__, _, children}) do
+              {:{}, [line: 1], [unquote(tag), attrs, children]}
+            end
 
-  defp tag_macros(tag) do
-    quote do
-      defmacro unquote(tag)(attrs, do: {:__block__, _, children}) do
-        {:{}, [line: 1], [unquote(tag), attrs, children]}
-      end
+            defmacro unquote(tag)(attrs, do: child) do
+              {:{}, [line: 1], [unquote(tag), attrs, [child]]}
+            end
 
-      defmacro unquote(tag)(attrs, do: child) do
-        {:{}, [line: 1], [unquote(tag), attrs, [child]]}
-      end
+            defmacro unquote(tag)(do: {:__block__, _, children}) do
+              {:{}, [line: 1], [unquote(tag), [], children]}
+            end
 
-      defmacro unquote(tag)(do: {:__block__, _, children}) do
-        {:{}, [line: 1], [unquote(tag), [], children]}
-      end
+            defmacro unquote(tag)(do: child) do
+              {:{}, [line: 1], [unquote(tag), [], [child]]}
+            end
 
-      defmacro unquote(tag)(do: child) do
-        {:{}, [line: 1], [unquote(tag), [], [child]]}
-      end
+            defmacro unquote(tag)(attrs) when is_list(attrs) do
+              {:{}, [line: 1], [unquote(tag), attrs, []]}
+            end
 
-      defmacro unquote(tag)(attrs) when is_list(attrs) do
-        {:{}, [line: 1], [unquote(tag), attrs, []]}
-      end
+            defmacro unquote(tag)(child) do
+              {:{}, [line: 1], [unquote(tag), [], [child]]}
+            end
 
-      defmacro unquote(tag)(child) when is_binary(child) do
-        {:{}, [line: 1], [unquote(tag), [], [child]]}
-      end
+            defmacro unquote(tag)() do
+              {:{}, [line: 1], [unquote(tag), [], []]}
+            end
+          end
+        end)
+      )
 
-      defmacro unquote(tag)() do
-        {:{}, [line: 1], [unquote(tag), [], []]}
+      @impl true
+      def resolve(el, args) do
+        Enum.reduce_while(@blocks, nil, fn block, _ ->
+          case block.resolve(el, args) do
+            {:error, :tag_unsupported, _} = error -> {:cont, error}
+            other -> {:halt, other}
+          end
+        end)
       end
     end
   end
