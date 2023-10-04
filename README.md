@@ -46,8 +46,8 @@ end
 
 ### Compiling a DSL
 
-Once defined, a DSL can be compiled by another library module at compile time, by calling its `definition`
-function:
+Once defined, a DSL can be used by another library module, by calling its `definition`
+function, in order to transform it into actual Elixir code, right before compilation:
 
 ```elixir
 defmodule Fsm do
