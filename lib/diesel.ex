@@ -67,9 +67,9 @@ defmodule Diesel do
 
       @doc false
       def resolve(node, args) do
-        Enum.reduce_while(@components, :not_supported, fn component, _ ->
+        Enum.reduce_while(@components, nil, fn component, _ ->
           case component.resolve(node, args) do
-            :not_supported -> {:cont, :not_supported}
+            {:error, :not_supported, _} = error -> {:cont, error}
             other -> {:halt, other}
           end
         end)
