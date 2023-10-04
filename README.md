@@ -1,11 +1,10 @@
 # Diesel
 
-**TODO: Add description**
+A toolkit to build DSLs in Elixir
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `diesel` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `diesel` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -14,8 +13,78 @@ def deps do
   ]
 end
 ```
+## Description
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/diesel>.
+DSLs built with Diesel are:
 
+* Purely declarative: they look just like HTML
+* Extensible: via component modules
+
+## Usage
+
+### Defining a DSL
+
+A new DSL can be defined with:
+
+```elixir
+defmodule FsmDsl do
+  use Diesel,
+    name: :fsm,
+    components: [
+      FsmDsl.State
+    ]
+end
+```
+
+with:
+
+```elixir
+defmodule FsmDsl.State do
+  use Diesel.Component, tags: [:state]
+end
+```
+
+### Compiling a DSL
+
+Once defined, a DSL can be compiled by another library module at compile time, by calling its `definition`
+function:
+
+```elixir
+defmodule Fsm do
+
+  defmacro __using__(_opts) do
+    quote do
+      import FsmDsl
+      @before_compile Fsm
+    end
+  end
+
+  defmacro __before_compile_(env) do
+    def = definition()
+
+    quote do
+      ...
+    end
+  end
+end
+```
+
+### Using a DSL
+
+For example, With the `Fsm` library module from the example above, we could write:
+
+```elixir
+defmodule Payment do
+  use Fsm
+
+  fsm do
+    state name: :accepted do
+      ...
+    end
+
+    state name: :declined do
+      ...
+    end
+  end
+end
+```
