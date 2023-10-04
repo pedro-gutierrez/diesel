@@ -36,7 +36,12 @@ end
 defmodule Latex do
   defmacro __using__(_) do
     quote do
+      @dsl Latex.Dsl
       import Latex.Dsl
+      @before_compile Latex
     end
+  end
+
+  defmacro __before_compile__(_env) do
   end
 end

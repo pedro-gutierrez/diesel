@@ -18,7 +18,7 @@ end
 DSLs built with Diesel are:
 
 * Purely declarative: they look just like HTML
-* Extensible: via component modules
+* Extensible: via block modules
 
 ## Usage
 
@@ -30,7 +30,7 @@ A new DSL can be defined with:
 defmodule FsmDsl do
   use Diesel,
     name: :fsm,
-    components: [
+    blocks: [
       FsmDsl.State
     ]
 end
@@ -40,7 +40,7 @@ with:
 
 ```elixir
 defmodule FsmDsl.State do
-  use Diesel.Component, tags: [:state]
+  use Diesel.Block, tags: [:state]
 end
 ```
 
