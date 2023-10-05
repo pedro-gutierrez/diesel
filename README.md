@@ -18,7 +18,7 @@ end
 DSLs built with Diesel are:
 
 * Purely declarative: they look just like HTML
-* Extensible: via block modules
+* Extensible: via block modules and generators
 
 ## Usage
 
@@ -28,8 +28,9 @@ A new DSL can be defined with:
 
 ```elixir
 defmodule FsmDsl do
-  use Diesel,
-    name: :fsm,
+  use Diesel.Dsl,
+    otp_app: :my_app,
+    root: :fsm,
     blocks: [
       FsmDsl.State
     ]
@@ -46,38 +47,33 @@ end
 
 ### Compiling a DSL
 
-Once defined, a DSL can be used by another library module, by calling its `definition`
-function, in order to transform it into actual Elixir code, right before compilation:
+Once defined, a DSL syntax can be used by another library module:
 
 ```elixir
 defmodule Fsm do
-
-  defmacro __using__(_opts) do
-    quote do
-      import FsmDsl
-      @before_compile Fsm
-    end
-  end
-
-  defmacro __before_compile_(env) do
-    def = definition()
-
-    quote do
-      ...
-    end
-  end
+  use Diesel,
+    otp_app: :my_app,
+    dsl: FsmDsl,
+    generators: [ ... ]
 end
 ```
 
+A list of generator mode can be provided, in order to produce actual Elixir code out of the DSL.
+Check the `Diesel.Generator` behaviour for more information on this.
+
 ### Using a DSL
 
-For example, With the `Fsm` library module from the example above, we could write:
+The `Fsm` library module from the example above is now ready to be used:
 
 ```elixir
 defmodule Payment do
   use Fsm
 
   fsm do
+    state name: :pending do
+      ...
+    end
+
     state name: :accepted do
       ...
     end
