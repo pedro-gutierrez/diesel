@@ -18,7 +18,7 @@ end
 DSLs built with Diesel are:
 
 * Purely declarative: they look just like HTML
-* Extensible: via block modules and generators
+* Extensible: via package modules and generators
 
 ## Usage
 
@@ -31,7 +31,7 @@ defmodule MyApp.Fsm.Dsl do
   use Diesel.Dsl,
     otp_app: :my_app,
     root: :fsm,
-    blocks: [
+    packages: [
       MyApp.Fsm.Dsl.State
     ]
 end
@@ -41,7 +41,7 @@ where:
 
 ```elixir
 defmodule MyApp.Fsm.Dsl.State do
-  use Diesel.Block, tags: [:state]
+  use Diesel.Package, tags: [:state]
 end
 ```
 
@@ -107,6 +107,6 @@ DSLs made with Diesel are not closed. Once defined, they can still be extended b
 developers, via application environment configuration:
 
 ```elixir
-config :my_app, MyApp.Fsm.Dsl, blocks: [ ...]
+config :my_app, MyApp.Fsm.Dsl, packages: [ ...]
 config :my_app, MyApp.Fsm, generators: [ ... ]
 ```

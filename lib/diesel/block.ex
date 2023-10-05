@@ -1,12 +1,12 @@
-defmodule Diesel.Block do
+defmodule Diesel.Package do
   @moduledoc """
-  A building block of a DSL.
+  A building package of a DSL.
 
   Usage:
 
   ```elixir
   defmodule MyApp.MyDsl.Style do
-    use Diesel.Block,
+    use Diesel.Package,
       tags: [:style]
 
     def resolve({:style, _, _}, ctx), do: ...
@@ -18,7 +18,7 @@ defmodule Diesel.Block do
     tags = Keyword.fetch!(opts, :tags)
 
     quote do
-      @before_compile Diesel.Block
+      @before_compile Diesel.Package
 
       def tags, do: unquote(tags)
     end

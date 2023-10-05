@@ -1,5 +1,5 @@
 defmodule Latex.Dsl.Preamble do
-  use Diesel.Block,
+  use Diesel.Package,
     tags: [
       :document,
       :package
@@ -7,7 +7,7 @@ defmodule Latex.Dsl.Preamble do
 end
 
 defmodule Latex.Dsl.Content do
-  use Diesel.Block,
+  use Diesel.Package,
     tags: [
       :section,
       :subsection
@@ -15,7 +15,7 @@ defmodule Latex.Dsl.Content do
 end
 
 defmodule Latex.Dsl.Music do
-  use Diesel.Block,
+  use Diesel.Package,
     tags: [
       :music,
       :instrument,
@@ -27,7 +27,7 @@ defmodule Latex.Dsl do
   use Diesel.Dsl,
     otp_app: :diesel,
     root: :latex,
-    blocks: [
+    packages: [
       Latex.Dsl.Preamble,
       Latex.Dsl.Content
     ]

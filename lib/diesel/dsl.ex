@@ -2,7 +2,7 @@ defmodule Diesel.Dsl do
   @moduledoc """
   Elixir DSL builder toolkit.
 
-  DSLs built with this library are actually documents. They look like HTML, and can be extended via blocks.
+  DSLs built with this library are actually documents. They look like HTML, and can be extended via packages.
 
   Usage:
 
@@ -11,19 +11,19 @@ defmodule Diesel.Dsl do
     use Diesel.Dsl,
       otp_app: :my_app,
       root: :style,
-      blocks: [
-        MyApp.MyDsl.OneBlock,
-        MyApp.MyDsl.AnotherBlock,
+      packages: [
+        MyApp.MyDsl.Package1,
+        MyApp.MyDsl.Package2,
       ]
   end
   ```
-  Additional blocks can be specified via application environment. These will be merged with the
-  list of blocks already declared in the module:
+  Additional packages can be specified via application environment. These will be appended to the
+  list of packages already declared in the module:
 
   ```elixir
   config :my_app, MyApp.MyDsl,
-    blocks: [
-      OtherApp.AThirdBlock
+    packages: [
+      OtherApp.SomeExtension
     ]
   ```
   """
@@ -32,29 +32,29 @@ defmodule Diesel.Dsl do
     otp_app = Keyword.fetch!(opts, :otp_app)
     root = Keyword.fetch!(opts, :root)
 
-    default_blocks =
+    default_packages =
       opts
-      |> Keyword.fetch!(:blocks)
+      |> Keyword.fetch!(:packages)
       |> Enum.map(fn {_, _, parts} ->
         Module.concat(parts)
       end)
 
-    extra_blocks =
+    extra_packages =
       otp_app
       |> Application.get_env(__CALLER__.module, [])
-      |> Keyword.get(:blocks, [])
+      |> Keyword.get(:packages, [])
 
-    blocks = default_blocks ++ extra_blocks
-    tags = Enum.flat_map(blocks, & &1.tags)
+    packages = default_packages ++ extra_packages
+    tags = Enum.flat_map(packages, & &1.tags)
 
     quote do
       @root unquote(root)
-      @blocks unquote(blocks)
+      @packages unquote(packages)
       @tags unquote(tags)
 
       def tags, do: @tags
       def root, do: @root
-      def blocks, do: @blocks
+      def packages, do: @packages
 
       def locals_without_parens do
         for tag <- @tags, do: {tag, :*}
@@ -109,8 +109,8 @@ defmodule Diesel.Dsl do
       )
 
       def resolve(el, args) do
-        Enum.reduce_while(@blocks, nil, fn block, _ ->
-          case block.resolve(el, args) do
+        Enum.reduce_while(@packages, nil, fn p, _ ->
+          case p.resolve(el, args) do
             {:error, :tag_unsupported, _} = error -> {:cont, error}
             other -> {:halt, other}
           end
