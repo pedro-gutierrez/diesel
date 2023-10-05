@@ -24,7 +24,7 @@ defmodule Latex.Dsl.Music do
 end
 
 defmodule Latex.Dsl do
-  use Diesel,
+  use Diesel.Dsl,
     otp_app: :diesel,
     root: :latex,
     blocks: [
@@ -33,15 +33,33 @@ defmodule Latex.Dsl do
     ]
 end
 
-defmodule Latex do
-  defmacro __using__(_) do
+defmodule Latex.Pdf do
+  @behaviour Diesel.Generator
+
+  @impl true
+  def generate(_mod, _definition) do
     quote do
-      @dsl Latex.Dsl
-      import Latex.Dsl
-      @before_compile Latex
+      def pdf, do: "%PDF-1.4 ..."
     end
   end
+end
 
-  defmacro __before_compile__(_env) do
+defmodule Latex.Html do
+  @behaviour Diesel.Generator
+
+  @impl true
+  def generate(_mod, _definition) do
+    quote do
+      def html, do: "<html> ..."
+    end
   end
+end
+
+defmodule Latex do
+  use Diesel,
+    otp_app: :diesel,
+    dsl: Latex.Dsl,
+    generators: [
+      Latex.Pdf
+    ]
 end
