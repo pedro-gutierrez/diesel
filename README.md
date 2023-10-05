@@ -24,7 +24,7 @@ DSLs built with Diesel are:
 
 ### Defining a DSL
 
-A new DSL can be defined with:
+Here is a very simple dsl that provides with a syntax composed of a `fsm` and a `state` macro:
 
 ```elixir
 defmodule FsmDsl do
@@ -37,7 +37,7 @@ defmodule FsmDsl do
 end
 ```
 
-with:
+where:
 
 ```elixir
 defmodule FsmDsl.State do
@@ -47,7 +47,7 @@ end
 
 ### Compiling a DSL
 
-Once defined, a DSL syntax can be used by another library module:
+Once defined, a DSL syntax can be imported into a library module:
 
 ```elixir
 defmodule Fsm do
@@ -83,4 +83,14 @@ defmodule Payment do
     end
   end
 end
+```
+
+### Extending a DSL
+
+DSLs made with Diesel are not closed. Once defined, they can still be extended by application
+developers, via application environment configuration:
+
+```elixir
+config :my_app, FsmDsl, blocks: [ ...]
+config :my_app, Fsm, generators: [ ... ]
 ```
