@@ -34,18 +34,18 @@ defmodule Diesel do
     mod = __CALLER__.module
     dsl = Keyword.fetch!(opts, :dsl)
     default_generators = Keyword.get(opts, :generators, [])
+    overrides = Keyword.get(opts, :overrides, [])
 
     extra_generators =
       otp_app
       |> Application.get_env(mod, [])
       |> Keyword.get(:generators, [])
 
-    IO.inspect(mod: mod, extra_generators: extra_generators)
-
     generators = default_generators ++ extra_generators
 
     quote do
       @dsl unquote(dsl)
+      @overrides unquote(overrides)
       @mod unquote(mod)
       @generators unquote(generators)
 
@@ -54,6 +54,7 @@ defmodule Diesel do
 
         quote do
           @dsl unquote(@dsl)
+          import Kernel, except: unquote(@overrides)
           import unquote(@dsl), only: :macros
           @before_compile unquote(@mod)
         end

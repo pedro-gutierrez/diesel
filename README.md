@@ -27,12 +27,12 @@ DSLs built with Diesel are:
 Here is a very simple dsl that provides with a syntax composed of a `fsm` and a `state` macro:
 
 ```elixir
-defmodule FsmDsl do
+defmodule MyApp.Fsm.Dsl do
   use Diesel.Dsl,
     otp_app: :my_app,
     root: :fsm,
     blocks: [
-      FsmDsl.State
+      MyApp.Fsm.Dsl.State
     ]
 end
 ```
@@ -40,7 +40,7 @@ end
 where:
 
 ```elixir
-defmodule FsmDsl.State do
+defmodule MyApp.Fsm.Dsl.State do
   use Diesel.Block, tags: [:state]
 end
 ```
@@ -50,10 +50,10 @@ end
 Once defined, a DSL syntax can be imported into a library module:
 
 ```elixir
-defmodule Fsm do
+defmodule MyApp.Fsm do
   use Diesel,
     otp_app: :my_app,
-    dsl: FsmDsl,
+    dsl: Fsm.Dsl,
     generators: [ ... ]
 end
 ```
@@ -61,13 +61,29 @@ end
 A list of generator mode can be provided, in order to produce actual Elixir code out of the DSL.
 Check the `Diesel.Generator` behaviour for more information on this.
 
+
+### Kernel conflicts
+
+Depending on how you define your DSL, you might get compiler errors in the form `function /Y
+imported from both (YOUR DSL) and Kernel, call is ambiguous`.
+
+You can stop importing the one from Kernel via the `:overrides` key, eg:
+
+```elixir
+defmodule MyApp.Html do
+  use Diesel,
+    otp_app: :my_app,
+    dsl: MyApp.Html.Dsl,
+    overrides: [div: 1]
+```
+
 ### Using a DSL
 
 The `Fsm` library module from the example above is now ready to be used:
 
 ```elixir
-defmodule Payment do
-  use Fsm
+defmodule MyApp.Payment do
+  use MyApp.Fsm
 
   fsm do
     state name: :pending do
@@ -91,6 +107,6 @@ DSLs made with Diesel are not closed. Once defined, they can still be extended b
 developers, via application environment configuration:
 
 ```elixir
-config :my_app, FsmDsl, blocks: [ ...]
-config :my_app, Fsm, generators: [ ... ]
+config :my_app, MyApp.Fsm.Dsl, blocks: [ ...]
+config :my_app, MyApp.Fsm, generators: [ ... ]
 ```
