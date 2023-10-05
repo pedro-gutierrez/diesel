@@ -1,6 +1,6 @@
 defmodule Diesel.Package do
   @moduledoc """
-  A building package of a DSL.
+  A package contributes to a DSL with a set of tags.
 
   Usage:
 
