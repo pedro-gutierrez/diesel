@@ -1,11 +1,3 @@
-defmodule Latex.Dsl.Preamble do
-  use Diesel.Package,
-    tags: [
-      :document,
-      :package
-    ]
-end
-
 defmodule Latex.Dsl.Content do
   use Diesel.Package,
     tags: [
@@ -27,8 +19,8 @@ defmodule Latex.Dsl do
   use Diesel.Dsl,
     otp_app: :diesel,
     root: :latex,
+    tags: [:document, :package],
     packages: [
-      Latex.Dsl.Preamble,
       Latex.Dsl.Content
     ]
 end

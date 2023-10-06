@@ -4,40 +4,55 @@ defmodule Diesel.Dsl do
 
   DSLs built with this library are actually documents. They look like HTML, and can be extended via packages.
 
-  Usage:
+  Simple usage:
 
   ```elixir
-  defmodule MyApp.MyDsl do
+  defmodule MyApp.Latex do
     use Diesel.Dsl,
       otp_app: :my_app,
-      root: :style,
-      packages: [
-        MyApp.MyDsl.Package1,
-        MyApp.MyDsl.Package2,
+      root: :latex,
+      tags: [
+        :document,
+        :package,
+        :section,
+        :subsection
       ]
   end
   ```
+
+  A DSL can be extended via packages:
+
+  ```elixir
+  defmodule MyApp.Latex do
+    use Diesel.Dsl,
+      ...
+      packages: [
+        MyApp.Latex.Music,
+      ]
+  end
+  ```
+
   Additional packages can be specified via application environment. These will be appended to the
   list of packages already declared in the module:
 
   ```elixir
-  config :my_app, MyApp.MyDsl,
+  config :my_app, MyApp.Latex,
     packages: [
-      OtherApp.SomeExtension
+      OtherApp.Latex.Math
     ]
   ```
   """
 
   defmacro(__using__(opts)) do
+    dsl = __CALLER__.module
     otp_app = Keyword.fetch!(opts, :otp_app)
     root = Keyword.fetch!(opts, :root)
+    default_tags = Keyword.get(opts, :tags, [])
 
     default_packages =
       opts
-      |> Keyword.fetch!(:packages)
-      |> Enum.map(fn {_, _, parts} ->
-        Module.concat(parts)
-      end)
+      |> Keyword.get(:packages, [])
+      |> Enum.map(fn {_, _, parts} -> Module.concat(parts) end)
 
     extra_packages =
       otp_app
@@ -45,7 +60,11 @@ defmodule Diesel.Dsl do
       |> Keyword.get(:packages, [])
 
     packages = default_packages ++ extra_packages
-    tags = Enum.flat_map(packages, & &1.tags)
+    tags = default_tags ++ Enum.flat_map(packages, & &1.tags)
+
+    if Enum.empty?(tags), do: "No tags defined in #{inspect(dsl)}"
+
+    tags = Enum.uniq(tags)
 
     quote do
       @root unquote(root)
