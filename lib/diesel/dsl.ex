@@ -69,7 +69,7 @@ defmodule Diesel.Dsl do
 
       defmacro unquote(root)(do: child) do
         quote do
-          @definition [unquote(child)]
+          @definition unquote(child)
           def definition, do: @definition
         end
       end

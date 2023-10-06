@@ -9,7 +9,8 @@ defmodule DieselTest do
     end
 
     test "produce an internal, tree-like structure definition" do
-      assert [{:document, [size: :a4], _}] = Paper.definition()
+      assert {:document, [size: :a4], _} = Paper.definition()
+      assert [{:document, _, _}, {:document, _, _}] = Papers.definition()
     end
 
     test "translate into actual Elixir code" do
