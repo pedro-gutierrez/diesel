@@ -26,6 +26,8 @@ defmodule Diesel.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:solid, "~> 0.15"}
+    ]
   end
 end

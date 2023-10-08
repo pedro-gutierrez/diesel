@@ -4,6 +4,18 @@ defmodule Latex.Dsl.Content do
       :section,
       :subsection
     ]
+
+  @impl true
+  def compiler do
+    quote do
+      def compile({:section, attrs, children}, ctx) do
+        attrs = attrs |> Keyword.put_new(:numbered, true) |> compile(ctx)
+        children = compile(children, ctx)
+
+        {:section, attrs, children}
+      end
+    end
+  end
 end
 
 defmodule Latex.Dsl.Music do
@@ -19,10 +31,15 @@ defmodule Latex.Dsl do
   use Diesel.Dsl,
     otp_app: :diesel,
     root: :latex,
-    tags: [:document, :package],
+    tags: [:document, :package, :packages],
     packages: [
       Latex.Dsl.Content
     ]
+
+  @impl Diesel.Dsl
+  def compile({:packages, names, _}, _ctx) do
+    for name <- names, do: {:package, [name: name], []}
+  end
 end
 
 defmodule Latex.Pdf do

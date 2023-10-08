@@ -43,6 +43,11 @@ defmodule Diesel.Dsl do
   ```
   """
 
+  @callback tags() :: [atom()]
+  @callback root() :: atom()
+  @callback locals_without_parens() :: keyword()
+  @callback compile(node :: tuple(), ctx :: map()) :: tuple()
+
   defmacro(__using__(opts)) do
     dsl = __CALLER__.module
     otp_app = Keyword.fetch!(opts, :otp_app)
@@ -67,14 +72,19 @@ defmodule Diesel.Dsl do
     tags = Enum.uniq(tags)
 
     quote do
+      @behaviour Diesel.Dsl
+      @before_compile Diesel.Dsl
       @root unquote(root)
       @packages unquote(packages)
       @tags unquote(tags)
 
+      @impl Diesel.Dsl
       def tags, do: @tags
-      def root, do: @root
-      def packages, do: @packages
 
+      @impl Diesel.Dsl
+      def root, do: @root
+
+      @impl Diesel.Dsl
       def locals_without_parens do
         for tag <- @tags, do: {tag, :*}
       end
@@ -82,6 +92,8 @@ defmodule Diesel.Dsl do
       defmacro unquote(root)(do: {:__block__, [], children}) do
         quote do
           @definition unquote(children)
+
+          @impl Diesel
           def definition, do: @definition
         end
       end
@@ -89,6 +101,8 @@ defmodule Diesel.Dsl do
       defmacro unquote(root)(do: child) do
         quote do
           @definition unquote(child)
+
+          @impl Diesel
           def definition, do: @definition
         end
       end
@@ -126,15 +140,40 @@ defmodule Diesel.Dsl do
           end
         end)
       )
-
-      def resolve(el, args) do
-        Enum.reduce_while(@packages, nil, fn p, _ ->
-          case p.resolve(el, args) do
-            {:error, :tag_unsupported, _} = error -> {:cont, error}
-            other -> {:halt, other}
-          end
-        end)
-      end
     end
+  end
+
+  defmacro __before_compile__(_env) do
+    package_compilers =
+      __CALLER__.module
+      |> Module.get_attribute(:packages)
+      |> Enum.filter(&function_exported?(&1, :compiler, 0))
+      |> Enum.map(& &1.compiler())
+
+    default_compiler =
+      quote do
+        @impl Diesel.Dsl
+        def compile({tag, attrs, children}, ctx) do
+          {tag, compile(attrs, ctx), compile(children, ctx)}
+        end
+
+        def compile(elements, ctx) when is_list(elements) do
+          elements
+          |> Enum.map(&[compile(&1, ctx)])
+          |> List.flatten()
+        end
+
+        def compile({attr_name, attr_value}, ctx) when is_atom(attr_name) do
+          {attr_name, compile(attr_value, ctx)}
+        end
+
+        def compile(str, ctx) when is_binary(str) do
+          Diesel.Templating.render!(str, ctx)
+        end
+
+        def compile(x, _ctx), do: x
+      end
+
+    package_compilers ++ [default_compiler]
   end
 end
