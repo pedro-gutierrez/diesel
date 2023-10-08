@@ -1,6 +1,6 @@
 defmodule Diesel.Templating do
   @moduledoc """
-  Liquid templating support for DSLs
+  Liquid templating support for DSLs during compilation.
 
   Example:
 
@@ -9,11 +9,13 @@ defmodule Diesel.Templating do
     use Latex
 
     latex do
-      document size: "{{ size }}" do
+      document size: "{{ doc.size }}" do
         ...
       end
     end
   end
+
+  iex> Paper.compile(%{doc: %{size: "a4"}})
   ```
 
   """

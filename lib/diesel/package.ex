@@ -1,26 +1,37 @@
 defmodule Diesel.Package do
   @moduledoc """
-  A package contributes to a DSL with a set of tags.
+  Packages extend DSLs by providing new tags.
 
-  Optionally, packages can also specify how these tags should be compiled, in order to form a new definition that can then be consumed by generators
+  Optionally, packages can also specify how these tags should be compiled, in order to form a new definition that can then be consumed by code generators.
 
   Usage:
 
   ```elixir
-  defmodule MyApp.MyDsl.Style do
+  defmodule Latex.Dsl.Music do
     use Diesel.Package,
-      tags: [:style]
+      tags: [
+        :music,
+        :instrument,
+        :meter
+      ]
 
-    @impl Diesel.Package
+    @impl true
     def compiler do
       quote do
-        def compile({:style, attrs, children}, ctx) do
-          ...
+        def compile({:music, attrs, children}, ctx) do
+          atttrs = Keyword.put_new(attrs, :indent, "10mm")
+          children = compile(children, ctx)
+
+          {:music, attrs, children}
         end
       end
     end
   end
   ```
+
+  The code returned by each package via the `compiler/1` function will be injected into the Dsl.
+
+  The `Diesel.Dsl` macro provides with a default implementation for the `compile/2` callback, so that you can conveniently traverse the definition tree.
   """
 
   @callback tags() :: [atom()]

@@ -2,31 +2,78 @@ defmodule Diesel do
   @moduledoc """
   Declarative programming in Elixir
 
-  DSLs define the syntax, generators produce code based on that syntax.
+  Diesel is a toolkit that helps you build your own DSLs.
 
-  Sample usage:
+  Example:
 
   ```elixir
-  defmodule MyApp.SomeModule do
+  defmodule Latex.Dsl do
+    use Diesel.Dsl,
+      otp_app: :latex,
+      root: :latex,
+      packages: [...],
+      tags: [
+        :document,
+        :package,
+        :packages,
+        :section,
+        :subsection,
+        ...
+      ],
+  end
+
+  defmodule Latex.Pdf do
+    @behaviour Diesel.Generator
+
+    @impl true
+    def generate(_mod, definition) do
+      quote do
+        def to_pdf, do: "%PDF-1.4 ..."
+      end
+    end
+  end
+
+  defmodule Latex do
     use Diesel,
       otp_app: :my_app,
-      dsl: MyApp.SomeDsl,
+      dsl: Latex.Dsl,
       generators: [
-        MyApp.SomeGenerator
+        Latex.Pdf
       ]
   end
   ```
 
-  DSLs built with Diesel are not closed: the can be easily extended by application developers via
-  application environment configuration:
+  then we could use it with:
 
   ```elixir
-  config :my_app, MyApp.Module,
-    generators: [MyApp.ExtraGenerator]
+  defmodule MyApp.Paper do
+    use Latex
+
+    latex do
+      document size: "a4" do
+        packages [:babel, :graphics]
+
+        section title: "Introduction" do
+          subsection title: "Details" do
+            ...
+          end
+        end
+      end
+    end
+  end
+
+  iex> MyApp.Paper.to_pdf()
+  "%PDF-1.4 ..."
   ```
 
-  Please take a look at the `Diesel.Dsl` module documentation and also the examples provided in the
-  tests.
+  DSLs built with Diesel are not sealed: they can be easily extended by via packages and code generators. These can be even defined by other apps, via application environment:
+
+  ```elixir
+  config :latex, Latex.Dsl, packages: [ ...]
+  config :my_app, MyApp.Paper, generators: [...]
+  ```
+
+  Please take a look at the `Diesel.Dsl` module documentation and also the examples provided in tests.
   """
   @type tag() :: atom()
   @type attrs() :: keyword()

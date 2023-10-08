@@ -1,14 +1,26 @@
 defmodule Diesel.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :diesel,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: docs(),
+      package: [
+        maintainers: [
+          "Pedro Gutiérrez"
+        ],
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/pedro-gutierrez/diesel"},
+        files: ~w(lib mix.exs .formatter.exs LICENSE.md README.md),
+        description: "Declarative programming in Elixir"
+      ]
     ]
   end
 
@@ -27,7 +39,15 @@ defmodule Diesel.MixProject do
 
   defp deps do
     [
+      {:ex_doc, ">= 0.0.0"},
       {:solid, "~> 0.15"}
+    ]
+  end
+
+  defp docs do
+    [
+      source_ref: "v#{@version}",
+      formatters: ["html", "epub"]
     ]
   end
 end

@@ -1,13 +1,18 @@
 defmodule Diesel.Dsl do
   @moduledoc """
-  Elixir DSL builder toolkit.
+  Defines the syntax provided by a DSL.
 
-  DSLs built with this library are actually documents. They look like HTML, and can be extended via packages.
+  DSLs built with Diesel:
+
+  * are documents. They look like HTML.
+  * define tags
+  * can be compiled
+  * can be extended via packages and code generators
 
   Simple usage:
 
   ```elixir
-  defmodule MyApp.Latex do
+  defmodule Latex.Dsl do
     use Diesel.Dsl,
       otp_app: :my_app,
       root: :latex,
@@ -23,22 +28,25 @@ defmodule Diesel.Dsl do
   A DSL can be extended via packages:
 
   ```elixir
-  defmodule MyApp.Latex do
+  defmodule Latex.Dsl do
     use Diesel.Dsl,
       ...
       packages: [
-        MyApp.Latex.Music,
+        Latex.Dsl.Music
       ]
   end
   ```
 
-  Additional packages can be specified via application environment. These will be appended to the
-  list of packages already declared in the module:
+  Packages allow you to define extra tags, as well as compiler rules.
+
+  Additional packages can be specified via application environment.
+
+  These will be appended to the list of packages already declared in the module:
 
   ```elixir
-  config :my_app, MyApp.Latex,
+  config :latex, Latex.Dsl,
     packages: [
-      OtherApp.Latex.Math
+      OtherApp.Latex.Dsl.Math
     ]
   ```
   """
