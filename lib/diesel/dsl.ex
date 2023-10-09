@@ -99,19 +99,37 @@ defmodule Diesel.Dsl do
 
       defmacro unquote(root)(do: {:__block__, [], children}) do
         quote do
-          @definition unquote(children)
+          @definition {unquote(@root), [], unquote(children)}
 
-          @impl Diesel
-          def definition, do: @definition
+          # @impl Diesel
+          # def definition, do: @definition
+        end
+      end
+
+      defmacro unquote(root)(attrs, do: {:__block__, [], children}) do
+        quote do
+          @definition {unquote(@root), unquote(attrs), unquote(children)}
+
+          # @impl Diesel
+          # def definition, do: @definition
         end
       end
 
       defmacro unquote(root)(do: child) do
         quote do
-          @definition unquote(child)
+          @definition {unquote(@root), [], [unquote(child)]}
 
-          @impl Diesel
-          def definition, do: @definition
+          # @impl Diesel
+          # def definition, do: @definition
+        end
+      end
+
+      defmacro unquote(root)(attrs, do: child) do
+        quote do
+          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+
+          # @impl Diesel
+          # def definition, do: @definition
         end
       end
 
