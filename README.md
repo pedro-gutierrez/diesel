@@ -77,6 +77,22 @@ defmodule MyApp.Html do
     overrides: [div: 1]
 ```
 
+### Compilation flags
+
+Compilation flags allow you to customise the definition before it goes to the actual compilation phase:
+
+```elixir
+defmodule MyApp.Latex do
+  use Diesel,
+    otp_app: :my_app,
+    dsl: MyApp.Latex.Dsl,
+    compilation_flags: [:strip_root]
+```
+
+Supported flags:
+
+* `strip_root`: before compiling, strip the root element from the definition.
+
 ### Using a DSL
 
 The `Fsm` library module from the example above is now ready to be used:

@@ -9,21 +9,27 @@ defmodule DieselTest do
     end
 
     test "produce an internal, tree-like structure definition" do
-      assert {:document, [size: "{{ document.size }}"],
+      assert {:latex, [version: 3.14159265],
               [
-                {:packages, [:babel, :graphics], []},
-                {:section, _, _}
+                {:document, [size: "{{ document.size }}"],
+                 [
+                   {:packages, [:babel, :graphics], []},
+                   {:section, _, _}
+                 ]}
               ]} = Paper.definition()
 
-      assert [{:document, _, _}, {:document, _, _}] = Papers.definition()
+      assert {:latex, [], [{:document, _, _}, {:document, _, _}]} = Papers.definition()
     end
 
     test "can be compiled" do
-      assert {:document, [size: "a4"],
+      assert {:latex, [version: 3.14159265],
               [
-                {:package, [name: :babel], []},
-                {:package, [name: :graphics], []},
-                {:section, [numbered: true, title: "Introduction"], _}
+                {:document, [size: "a4"],
+                 [
+                   {:package, [name: :babel], []},
+                   {:package, [name: :graphics], []},
+                   {:section, [numbered: true, title: "Introduction"], _}
+                 ]}
               ]} = Paper.compile(%{document: %{size: :a4}})
     end
 

@@ -1,7 +1,7 @@
 defmodule Paper do
   use Latex
 
-  latex do
+  latex version: 3.14159265 do
     document size: "{{ document.size }}" do
       packages([:babel, :graphics])
 
