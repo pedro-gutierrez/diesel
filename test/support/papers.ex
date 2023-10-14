@@ -1,4 +1,5 @@
 defmodule Papers do
+  @moduledoc false
   use Latex
 
   latex do

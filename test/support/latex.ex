@@ -1,4 +1,5 @@
 defmodule Latex.Dsl.Content do
+  @moduledoc false
   use Diesel.Package,
     tags: [
       :section,
@@ -19,6 +20,7 @@ defmodule Latex.Dsl.Content do
 end
 
 defmodule Latex.Dsl.Music do
+  @moduledoc false
   use Diesel.Package,
     tags: [
       :music,
@@ -28,6 +30,7 @@ defmodule Latex.Dsl.Music do
 end
 
 defmodule Latex.Dsl do
+  @moduledoc false
   use Diesel.Dsl,
     otp_app: :diesel,
     root: :latex,
@@ -43,6 +46,7 @@ defmodule Latex.Dsl do
 end
 
 defmodule Latex.Pdf do
+  @moduledoc false
   @behaviour Diesel.Generator
 
   @impl true
@@ -54,6 +58,7 @@ defmodule Latex.Pdf do
 end
 
 defmodule Latex.Html do
+  @moduledoc false
   @behaviour Diesel.Generator
 
   @impl true
@@ -65,6 +70,7 @@ defmodule Latex.Html do
 end
 
 defmodule Latex do
+  @moduledoc false
   use Diesel,
     otp_app: :diesel,
     dsl: Latex.Dsl,
