@@ -39,6 +39,7 @@ defmodule Diesel.MixProject do
 
   defp deps do
     [
+      {:credo, "~> 1.7"},
       {:ex_doc, ">= 0.0.0"},
       {:solid, "~> 0.15"}
     ]

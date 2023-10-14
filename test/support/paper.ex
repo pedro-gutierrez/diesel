@@ -1,4 +1,5 @@
 defmodule Paper do
+  @moduledoc false
   use Latex
 
   latex version: 3.14159265 do
