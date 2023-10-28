@@ -117,6 +117,22 @@ defmodule MyApp.Payment do
 end
 ```
 
+The `:name` attribute of any given tag is implicit. For example, the following notation:
+
+```elixir
+state :pending, final: true do
+  ...
+end
+```
+
+is equivalent to:
+
+```elixir
+state name: :pending, final: true do
+  ...
+end
+```
+
 ### Extending a DSL
 
 DSLs made with Diesel are not closed. Once defined, they can still be extended by application

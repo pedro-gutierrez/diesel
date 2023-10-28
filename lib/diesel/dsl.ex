@@ -100,36 +100,37 @@ defmodule Diesel.Dsl do
       defmacro unquote(root)(do: {:__block__, [], children}) do
         quote do
           @definition {unquote(@root), [], unquote(children)}
-
-          # @impl Diesel
-          # def definition, do: @definition
         end
       end
 
       defmacro unquote(root)(attrs, do: {:__block__, [], children}) do
         quote do
           @definition {unquote(@root), unquote(attrs), unquote(children)}
+        end
+      end
 
-          # @impl Diesel
-          # def definition, do: @definition
+      defmacro unquote(root)(name, attrs, do: {:__block__, [], children}) do
+        quote do
+          @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)),
+                       unquote(children)}
         end
       end
 
       defmacro unquote(root)(do: child) do
         quote do
           @definition {unquote(@root), [], [unquote(child)]}
-
-          # @impl Diesel
-          # def definition, do: @definition
         end
       end
 
       defmacro unquote(root)(attrs, do: child) do
         quote do
           @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        end
+      end
 
-          # @impl Diesel
-          # def definition, do: @definition
+      defmacro unquote(root)(name, attrs, do: child) do
+        quote do
+          @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)), [unquote(child)]}
         end
       end
 
@@ -140,8 +141,16 @@ defmodule Diesel.Dsl do
               {:{}, [line: 1], [unquote(tag), attrs, children]}
             end
 
+            defmacro unquote(tag)(name, attrs, do: {:__block__, _, children}) do
+              {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), children]}
+            end
+
             defmacro unquote(tag)(attrs, do: child) do
               {:{}, [line: 1], [unquote(tag), attrs, [child]]}
+            end
+
+            defmacro unquote(tag)(name, attrs, do: child) do
+              {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), [child]]}
             end
 
             defmacro unquote(tag)(do: {:__block__, _, children}) do
@@ -154,6 +163,10 @@ defmodule Diesel.Dsl do
 
             defmacro unquote(tag)(attrs) when is_list(attrs) do
               {:{}, [line: 1], [unquote(tag), attrs, []]}
+            end
+
+            defmacro unquote(tag)(name, attrs) when is_list(attrs) do
+              {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), []]}
             end
 
             defmacro unquote(tag)(child) do
