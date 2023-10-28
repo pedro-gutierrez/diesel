@@ -37,5 +37,13 @@ defmodule DieselTest do
       assert Paper.pdf() =~ "%PDF"
       assert Paper.html() =~ "<html>"
     end
+
+    test "have an implicit name attribute" do
+      assert {:latex, [],
+              [
+                {:document, [name: :essai, status: :draft], []},
+                {:document, [name: :thesis], []}
+              ]} == Papers.definition()
+    end
   end
 end

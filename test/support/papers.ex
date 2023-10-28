@@ -3,10 +3,10 @@ defmodule Papers do
   use Latex
 
   latex do
-    document do
+    document :essai, status: :draft do
     end
 
-    document do
+    document name: :thesis do
     end
   end
 end
