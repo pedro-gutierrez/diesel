@@ -101,6 +101,7 @@ defmodule Diesel do
       @mod unquote(mod)
       @generators unquote(generators)
       @compilation_flags unquote(compilation_flags)
+      @behaviour Diesel.Parser
 
       defmacro __using__(_) do
         mod = __CALLER__.module
@@ -115,9 +116,7 @@ defmodule Diesel do
           @before_compile unquote(@mod)
 
           @impl Diesel
-          def compile(ctx \\ %{}) do
-            definition() |> maybe_strip_root() |> @dsl.compile(ctx)
-          end
+          def compile(ctx \\ %{}), do: definition() |> maybe_strip_root() |> @dsl.compile(ctx)
 
           if unquote(Enum.member?(@compilation_flags, :strip_root)) do
             defp maybe_strip_root({@root, _, [child]}), do: child
@@ -131,6 +130,7 @@ defmodule Diesel do
       defmacro __before_compile__(_env) do
         mod = __CALLER__.module
         definition = Module.get_attribute(mod, :definition)
+        definition = parse(mod, definition)
 
         [definition_ast()] ++
           Enum.flat_map(@generators, &[&1.generate(mod, definition)])
@@ -142,6 +142,11 @@ defmodule Diesel do
           def definition, do: @definition
         end
       end
+
+      @impl Diesel.Parser
+      def parse(_caller_module, definition), do: definition
+
+      defoverridable parse: 2
     end
   end
 end

@@ -58,8 +58,27 @@ defmodule MyApp.Fsm do
 end
 ```
 
-A list of generator mode can be provided, in order to produce actual Elixir code out of the DSL.
+A list of generator modules can be provided, in order to produce actual Elixir code out of the DSL.
 Check the `Diesel.Generator` behaviour for more information on this.
+
+By default, the raw definition defined by the dsl will be given to generators. Such a definition is in the form of a tree of nested tuples, similar to the structure you'd expect from a html document.
+
+It is possible however to add a parsing step in order to convert the raw definition into a more suitable data structure to be consumed by generators. All you need to do is override the `parse/2` function defined by the `Diesel.Parser` behaviour, which is automatically implemented by modules using the `Diesel` macro.
+
+```elixir
+defmodule MyApp.Fsm do
+  use Diesel
+  ...
+
+  defstruct states: []
+
+  @impl Diesel.Parser
+  def parse(caller_module, {:fsm, [], states} = raw_definition) do
+    ...
+    %__MODULE__{states: ...} # this will be given to generators, instead of the raw definition
+  end
+end
+```
 
 
 ### Kernel conflicts
