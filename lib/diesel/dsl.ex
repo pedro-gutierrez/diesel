@@ -2,64 +2,32 @@ defmodule Diesel.Dsl do
   @moduledoc """
   Defines the syntax provided by a DSL.
 
-  DSLs built with Diesel:
-
-  * are documents. They look like HTML.
-  * define tags
-  * can be compiled
-  * can be extended via packages and code generators
-
   Simple usage:
 
   ```elixir
-  defmodule Latex.Dsl do
+  defmodule MyApp.Fsm.Dsl do
     use Diesel.Dsl,
       otp_app: :my_app,
-      root: :latex,
+      root: :fsm,
       tags: [
-        :document,
-        :package,
-        :section,
-        :subsection
+        :state,
+        :on,
+        :action,
+        :next
       ]
   end
   ```
 
-  A DSL can be extended via packages:
-
-  ```elixir
-  defmodule Latex.Dsl do
-    use Diesel.Dsl,
-      ...
-      packages: [
-        Latex.Dsl.Music
-      ]
-  end
-  ```
-
-  Packages allow you to define extra tags, as well as compiler rules.
-
-  Additional packages can be specified via application environment.
-
-  These will be appended to the list of packages already declared in the module:
-
-  ```elixir
-  config :latex, Latex.Dsl,
-    packages: [
-      OtherApp.Latex.Dsl.Math
-    ]
-  ```
+  Please check the documentation for more info on how to extend DSLs via `packages`
   """
+  alias Diesel.Tag
 
-  @callback tags() :: [atom()]
-  @callback root() :: atom()
-  @callback locals_without_parens() :: keyword()
-  @callback compile(node :: tuple(), ctx :: map()) :: tuple()
+  import Diesel.Naming
 
-  defmacro(__using__(opts)) do
+  defmacro __using__(opts) do
     dsl = __CALLER__.module
     otp_app = Keyword.fetch!(opts, :otp_app)
-    root = Keyword.fetch!(opts, :root)
+    root = opts |> Keyword.fetch!(:root) |> module_name()
     default_tags = Keyword.get(opts, :tags, [])
 
     default_packages =
@@ -77,76 +45,117 @@ defmodule Diesel.Dsl do
 
     if Enum.empty?(tags), do: "No tags defined in #{inspect(dsl)}"
 
-    tags = Enum.uniq(tags)
+    tags = tags |> Enum.map(&module_name/1) |> Enum.uniq()
+    tags_by_name = Enum.reduce(tags, %{}, &Map.put(&2, Tag.name(&1), &1))
+
+    tag_names = Map.keys(tags_by_name)
+    root_name = Tag.name(root)
+
+    tags_by_name = Map.put(tags_by_name, root_name, root)
 
     quote do
-      @behaviour Diesel.Dsl
       @before_compile Diesel.Dsl
-      @root unquote(root)
+      @root unquote(root_name)
+      @tag_names unquote([root_name | tag_names])
+      @tags_by_name unquote(Macro.escape(tags_by_name))
       @packages unquote(packages)
-      @tags unquote(tags)
+      @locals_without_parens for tag <- @tag_names, do: {tag, :*}
 
-      @impl Diesel.Dsl
-      def tags, do: @tags
-
-      @impl Diesel.Dsl
       def root, do: @root
+      def tags, do: @tag_names
+      def local_without_parens, do: @locals_without_parens
 
-      @impl Diesel.Dsl
-      def locals_without_parens do
-        for tag <- @tags, do: {tag, :*}
+      def validate({tag, _, children} = node) do
+        with :ok <- validate(children), do: validate_node(node)
       end
 
-      defmacro unquote(root)(do: {:__block__, [], children}) do
+      def validate(nodes) when is_list(nodes) do
+        Enum.reduce_while(nodes, :ok, fn node, _ ->
+          case validate(node) do
+            :ok -> {:cont, :ok}
+            error -> {:halt, error}
+          end
+        end)
+      end
+
+      defp validate_node({tag, _, _} = node) do
+        case Map.get(@tags_by_name, tag) do
+          nil ->
+            {:error, "Unsupported tag #{inspect(tag)}"}
+
+          tag ->
+            with {:error, reason} <- Tag.validate(tag, node) do
+              {:error, "in tag '#{Tag.name(tag)}'. #{reason}"}
+            end
+        end
+      end
+
+      def validate(_), do: :ok
+
+      defmacro unquote(root_name)(do: {:__block__, [], children}) do
         quote do
           @definition {unquote(@root), [], unquote(children)}
         end
       end
 
-      defmacro unquote(root)(attrs, do: {:__block__, [], children}) do
+      defmacro unquote(root_name)(do: child) do
+        quote do
+          @definition {unquote(@root), [], [unquote(child)]}
+        end
+      end
+
+      defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) do
         quote do
           @definition {unquote(@root), unquote(attrs), unquote(children)}
         end
       end
 
-      defmacro unquote(root)(name, attrs, do: {:__block__, [], children}) do
+      defmacro unquote(root_name)(attrs, do: child) do
+        quote do
+          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        end
+      end
+
+      defmacro unquote(root_name)(attrs, child) do
+        quote do
+          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        end
+      end
+
+      defmacro unquote(root_name)(name, attrs, do: {:__block__, [], children}) do
         quote do
           @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)),
                        unquote(children)}
         end
       end
 
-      defmacro unquote(root)(do: child) do
-        quote do
-          @definition {unquote(@root), [], [unquote(child)]}
-        end
-      end
-
-      defmacro unquote(root)(attrs, do: child) do
-        quote do
-          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
-        end
-      end
-
-      defmacro unquote(root)(name, attrs, do: child) do
+      defmacro unquote(root_name)(name, attrs, do: child) do
         quote do
           @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)), [unquote(child)]}
         end
       end
 
       unquote_splicing(
-        Enum.map(tags, fn tag ->
+        Enum.map(tag_names, fn tag ->
           quote do
-            defmacro unquote(tag)(attrs, do: {:__block__, _, children}) do
+            defmacro unquote(tag)(attrs, do: {:__block__, _, children}) when is_list(attrs) do
               {:{}, [line: 1], [unquote(tag), attrs, children]}
+            end
+
+            defmacro unquote(tag)(attr, do: {:__block__, _, children}) do
+              {:{}, [line: 1], [unquote(tag), [name: attr], children]}
             end
 
             defmacro unquote(tag)(name, attrs, do: {:__block__, _, children}) do
               {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), children]}
             end
 
-            defmacro unquote(tag)(attrs, do: child) do
+            defmacro unquote(tag)(attrs, do: child) when is_list(attrs) do
               {:{}, [line: 1], [unquote(tag), attrs, [child]]}
+            end
+
+            defmacro unquote(tag)(attr, do: child) do
+              {:{}, [line: 1], [unquote(tag), [name: attr], [child]]}
             end
 
             defmacro unquote(tag)(name, attrs, do: child) do
@@ -165,12 +174,12 @@ defmodule Diesel.Dsl do
               {:{}, [line: 1], [unquote(tag), attrs, []]}
             end
 
-            defmacro unquote(tag)(name, attrs) when is_list(attrs) do
-              {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), []]}
-            end
-
             defmacro unquote(tag)(child) do
               {:{}, [line: 1], [unquote(tag), [], [child]]}
+            end
+
+            defmacro unquote(tag)(name, attrs) when is_list(attrs) do
+              {:{}, [line: 1], [unquote(tag), Keyword.put(attrs, :name, name), []]}
             end
 
             defmacro unquote(tag)() do
@@ -191,7 +200,6 @@ defmodule Diesel.Dsl do
 
     default_compiler =
       quote do
-        @impl Diesel.Dsl
         def compile({tag, attrs, children}, ctx) do
           {tag, compile(attrs, ctx), compile(children, ctx)}
         end
@@ -214,5 +222,12 @@ defmodule Diesel.Dsl do
       end
 
     package_compilers ++ [default_compiler]
+  end
+
+  @doc false
+  def validate!(dsl, definition) do
+    with {:error, reason} <- dsl.validate(definition) do
+      raise "invalid syntax #{reason}"
+    end
   end
 end

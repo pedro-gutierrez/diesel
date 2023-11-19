@@ -2,48 +2,40 @@ defmodule DieselTest do
   use ExUnit.Case
 
   describe "dsls" do
-    test "have an extenstible syntax" do
-      for tag <- Latex.Dsl.Music.tags() do
-        assert tag in Latex.Dsl.tags()
-      end
+    test "are made of tags" do
+      assert [:fsm, :action, :next, :on, :state] == Fsm.Dsl.tags()
     end
 
-    test "produce an internal, tree-like structure definition" do
-      assert {:latex, [version: 3.14159265],
-              [
-                {:document, [size: "{{ document.size }}"],
-                 [
-                   {:packages, [:babel, :graphics], []},
-                   {:section, _, _}
-                 ]}
-              ]} = Paper.definition()
-
-      assert {:latex, [], [{:document, _, _}, {:document, _, _}]} = Papers.definition()
+    test "produce an internal definition" do
+      assert {
+               :fsm,
+               [],
+               [
+                 {:state, [name: :pending],
+                  [
+                    {:on, [event: :created],
+                     [{:action, [module: SendToGateway], []}, {:next, [state: :sent], []}]}
+                  ]},
+                 {
+                   :state,
+                   [name: :sent, timeout: 60],
+                   [
+                     {:on, [event: :success],
+                      [{:action, [module: NotifyParties], []}, {:next, [state: :accepted], []}]},
+                     {:on, [event: :error],
+                      [{:action, [module: NotifyParties], []}, {:next, [state: :declined], []}]},
+                     {:on, [event: :timeout],
+                      [{:action, [module: NotifyParties], []}, {:next, [state: :declined], []}]}
+                   ]
+                 },
+                 {:state, [name: :accepted], []},
+                 {:state, [name: :declined], []}
+               ]
+             } == Payment.definition()
     end
 
-    test "can be compiled" do
-      assert {:latex, [version: 3.14159265],
-              [
-                {:document, [size: "a4"],
-                 [
-                   {:package, [name: :babel], []},
-                   {:package, [name: :graphics], []},
-                   {:section, [numbered: true, title: "Introduction"], _}
-                 ]}
-              ]} = Paper.compile(%{document: %{size: :a4}})
-    end
-
-    test "translate into actual Elixir code" do
-      assert Paper.pdf() =~ "%PDF"
-      assert Paper.html() =~ "<html>"
-    end
-
-    test "have an implicit name attribute" do
-      assert {:latex, [],
-              [
-                {:document, [name: :essai, status: :draft], []},
-                {:document, [name: :thesis], []}
-              ]} == Papers.definition()
+    test "are used to generate code" do
+      assert Payment.diagram() =~ "digraph {"
     end
   end
 end

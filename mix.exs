@@ -1,7 +1,7 @@
 defmodule Diesel.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.5.0"
 
   def project do
     [
@@ -47,8 +47,19 @@ defmodule Diesel.MixProject do
 
   defp docs do
     [
-      source_ref: "v#{@version}",
-      formatters: ["html", "epub"]
+      extras: extras(),
+      formatters: ["html", "epub"],
+      source_ref: "v#{@version}"
+    ]
+  end
+
+  defp extras do
+    [
+      "guides/overview.md",
+      "guides/tutorial.md",
+      "guides/parsers-and-generators.md",
+      "guides/unstructured-tags.md",
+      "guides/extensibility.md"
     ]
   end
 end

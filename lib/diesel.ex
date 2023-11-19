@@ -4,88 +4,47 @@ defmodule Diesel do
 
   Diesel is a toolkit that helps you build your own DSLs.
 
-  Example:
+  Usage:
 
   ```elixir
-  defmodule Latex.Dsl do
-    use Diesel.Dsl,
-      otp_app: :latex,
-      root: :latex,
-      packages: [...],
-      tags: [
-        :document,
-        :package,
-        :packages,
-        :section,
-        :subsection,
-        ...
-      ],
-  end
-
-  defmodule Latex.Pdf do
-    @behaviour Diesel.Generator
-
-    @impl true
-    def generate(_mod, definition) do
-      quote do
-        def to_pdf, do: "%PDF-1.4 ..."
-      end
-    end
-  end
-
-  defmodule Latex do
+  defmodule MyApp.Fsm do
     use Diesel,
       otp_app: :my_app,
-      dsl: Latex.Dsl,
+      dsl: MyApp.Fsm.Dsl,
+      parsers: [
+        ...
+      ],
       generators: [
-        Latex.Pdf
+        ...
       ]
   end
   ```
 
-  then we could use it with:
+  For more information on how to use this library, please check:
 
-  ```elixir
-  defmodule MyApp.Paper do
-    use Latex
-
-    latex do
-      document size: "a4" do
-        packages [:babel, :graphics]
-
-        section title: "Introduction" do
-          subsection title: "Details" do
-            ...
-          end
-        end
-      end
-    end
-  end
-
-  iex> MyApp.Paper.to_pdf()
-  "%PDF-1.4 ..."
-  ```
-
-  DSLs built with Diesel are not sealed: they can be easily extended both with packages and code generators. These can be even defined by other apps, via application environment:
-
-  ```elixir
-  config :latex, Latex.Dsl, packages: [ ...]
-  config :my_app, MyApp.Paper, generators: [...]
-  ```
-
-  Please take a look at the `Diesel.Dsl` module documentation and also the examples provided in tests.
+  * the `Diesel.Dsl` and `Diesel.Tag` modules,
+  * the guides and tutorials provided in the documentation
+  * the examples used in tests
   """
-  @type tag() :: atom()
-  @type attrs() :: keyword()
-  @type element() :: {tag(), attrs(), [element()]}
 
-  @callback definition() :: element()
-  @callback compile(ctx :: map()) :: any()
+  @doc "Returns the raw definition for the dsl, before compilation"
+  @callback definition() :: term()
+
+  @doc """
+  Compiles the raw definition and returns a compiled version of it
+
+  The obtained structure is the result of applying the configured list of parsers to the raw
+  internal definition and then compiling it according to the rules implemented by packages.
+  """
+  @callback compile(context :: map()) :: term()
+
+  alias Diesel.Parser
+  import Diesel.Naming
 
   defmacro __using__(opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
     mod = __CALLER__.module
-    dsl = Keyword.fetch!(opts, :dsl)
+    dsl = opts |> Keyword.fetch!(:dsl) |> module_name()
     overrides = Keyword.get(opts, :overrides, [])
     compilation_flags = Keyword.get(opts, :compilation_flags, [])
 
@@ -95,45 +54,73 @@ defmodule Diesel do
          |> Application.get_env(mod, [])
          |> Keyword.get(:generators, []))
 
+    generators = Enum.map(generators, &module_name/1)
+
+    parsers =
+      Keyword.get(opts, :parsers, []) ++
+        (otp_app
+         |> Application.get_env(mod, [])
+         |> Keyword.get(:parsers, []))
+
+    parsers = Enum.map(compilation_flags, &Parser.named/1) ++ parsers
+
+    parsers = Enum.map(parsers, &module_name/1)
+
     quote do
+      @otp_app unquote(otp_app)
       @dsl unquote(dsl)
       @overrides unquote(overrides)
       @mod unquote(mod)
+      @parsers unquote(parsers)
       @generators unquote(generators)
-      @compilation_flags unquote(compilation_flags)
-      @behaviour Diesel.Parser
 
       defmacro __using__(_) do
         mod = __CALLER__.module
 
         quote do
           @behaviour Diesel
-
+          @otp_app unquote(@otp_app)
           @dsl unquote(@dsl)
+          @parsers unquote(@parsers)
+          @generators unquote(@generators)
           @root @dsl.root()
           import Kernel, except: unquote(@overrides)
           import unquote(@dsl), only: :macros
           @before_compile unquote(@mod)
 
-          @impl Diesel
-          def compile(ctx \\ %{}), do: definition() |> maybe_strip_root() |> @dsl.compile(ctx)
+          @compilation_context @otp_app
+                               |> Application.compile_env(__MODULE__, [])
+                               |> Keyword.get(:compilation_context, %{})
 
-          if unquote(Enum.member?(@compilation_flags, :strip_root)) do
-            defp maybe_strip_root({@root, _, [child]}), do: child
-            defp maybe_strip_root({@root, _, children}), do: children
-          else
-            defp maybe_strip_root(definition), do: definition
+          @impl Diesel
+          def compile(ctx \\ %{}) do
+            ctx = Map.merge(@compilation_context, Map.new(ctx))
+
+            @parsers
+            |> Enum.reduce(definition(), & &1.parse(__MODULE__, &2))
+            |> @dsl.compile(ctx)
           end
         end
       end
 
       defmacro __before_compile__(_env) do
         mod = __CALLER__.module
+        compilation_context = Module.get_attribute(mod, :compilation_context)
+        dsl = Module.get_attribute(mod, :dsl)
         definition = Module.get_attribute(mod, :definition)
-        definition = parse(mod, definition)
+        parsers = Module.get_attribute(mod, :parsers)
+        generators = Module.get_attribute(mod, :generators)
 
-        [definition_ast()] ++
-          Enum.flat_map(@generators, &[&1.generate(mod, definition)])
+        Diesel.Dsl.validate!(dsl, definition)
+
+        definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
+
+        generated_code =
+          generators
+          |> Enum.flat_map(&[&1.generate(mod, definition)])
+          |> Enum.reject(&is_nil/1)
+
+        [definition_ast() | generated_code]
       end
 
       defp definition_ast do
@@ -142,11 +129,6 @@ defmodule Diesel do
           def definition, do: @definition
         end
       end
-
-      @impl Diesel.Parser
-      def parse(_caller_module, definition), do: definition
-
-      defoverridable parse: 2
     end
   end
 end

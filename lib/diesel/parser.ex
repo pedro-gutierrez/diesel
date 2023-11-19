@@ -1,6 +1,6 @@
 defmodule Diesel.Parser do
   @moduledoc """
-  Parses a raw dsl definition before compilation
+  A parser is a DSL tranformation step before code generation
 
   Example:
 
@@ -10,9 +10,17 @@ defmodule Diesel.Parser do
   end
   ```
 
-  Parsing a definition is an optional step. The result returned will be then passed to generators.
-
-  Modules using the `Diesel` are given a default, though overriable, no-op implementation
+  Parsing a definition is an optional step.
   """
   @callback parse(caller_module :: module(), definition :: term()) :: term()
+
+  @doc """
+  Returns a built-in parser, given its name
+
+  Supported names:
+
+  * `strip_root`
+  """
+  def named(:strip_root), do: Diesel.Parser.StripRoot
+  def named(other), do: raise("No built-in parser for name #{inspect(other)}")
 end

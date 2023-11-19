@@ -1,6 +1,8 @@
 defmodule Diesel.Generator do
   @moduledoc """
-  Generators produce Elixir code based on DSLs, before modules are compiled.
+  Generators produce actual Elixir code from DSLs.
+
+  Given a caller module and a dsl definition, a generator returns one or multiple quoted expressions.
   """
   @callback generate(target :: module(), definition :: term()) :: Macro.t() | [Macro.t()]
 end
