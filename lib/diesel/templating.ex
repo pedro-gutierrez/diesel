@@ -15,9 +15,9 @@ defmodule Diesel.Templating do
     end
   end
 
-  iex> Paper.compile(%{doc: %{size: "a4"}})
+  iex> context = %{doc: %{size: "a4"}}
+  iex> Paper.compile(context)
   ```
-
   """
 
   def render!(tpl, vars) when is_list(vars) do
