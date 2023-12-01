@@ -23,7 +23,7 @@ defmodule Fsm.Dsl.Action do
   use Diesel.Tag
 
   tag do
-    child kind: :module, min: 0
+    child kind: :module, min: 1, max: 1
   end
 end
 
