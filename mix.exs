@@ -1,7 +1,7 @@
 defmodule Diesel.MixProject do
   use Mix.Project
 
-  @version "0.5.1"
+  @version "0.5.2"
 
   def project do
     [
@@ -56,6 +56,7 @@ defmodule Diesel.MixProject do
   defp extras do
     [
       "guides/overview.md",
+      "guides/installation.md",
       "guides/tutorial.md",
       "guides/parsers-and-generators.md",
       "guides/unstructured-tags.md",
