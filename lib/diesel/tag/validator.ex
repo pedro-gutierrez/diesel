@@ -47,7 +47,7 @@ defmodule Diesel.Tag.Validator do
           attr_name -> attr_name
         end
 
-      if expected?(attr_name, specs) do
+      if expected_name?(attr_name, specs) do
         {:cont, :ok}
       else
         {:halt, {:error, "Unexpected attribute '#{attr_name}'"}}
@@ -57,8 +57,7 @@ defmodule Diesel.Tag.Validator do
 
   defp validate_expected_children(specs, children) do
     Enum.reduce_while(specs, :ok, fn spec, _ ->
-      name = spec[:name]
-      children = Enum.filter(children, fn {tag, _, _} -> tag == name end)
+      children = find_matching_children(children, spec)
       min = Keyword.get(spec, :min, 0)
       max = Keyword.get(spec, :max, :any)
       actual = Enum.count(children)
@@ -68,9 +67,47 @@ defmodule Diesel.Tag.Validator do
           {:cont, :ok}
 
         {:error, reason} ->
-          {:halt, {:error, "Unexpected number of children of type '#{name}'. #{reason}"}}
+          children_description = children_description(spec)
+          {:halt, {:error, "Unexpected number of children #{children_description}. #{reason}"}}
       end
     end)
+  end
+
+  defp children_description(spec) do
+    if spec[:name] do
+      "of name '#{spec[:name]}'"
+    else
+      "of kind '#{spec[:kind]}'"
+    end
+  end
+
+  defp find_matching_children(children, spec) do
+    name = Keyword.get(spec, :name)
+    kind = spec |> Keyword.get(:kind, :tag) |> ensure_valid_kind!()
+    find_matching_children(children, name, kind)
+  end
+
+  defp find_matching_children(children, name, :tag) do
+    Enum.filter(children, fn
+      {tag, _, _} -> tag == name
+      _ -> false
+    end)
+  end
+
+  defp find_matching_children(children, nil, kind) do
+    Enum.filter(children, fn child ->
+      tag_kind(child) == kind
+    end)
+  end
+
+  @valid_kinds [:tag, :module, :boolean, :number, :string]
+
+  defp ensure_valid_kind!(kind) do
+    unless Enum.member?(@valid_kinds, kind) do
+      raise "Found kind '#{kind}', in tag definition, but only #{inspect(@valid_kinds)} are accepted"
+    end
+
+    kind
   end
 
   defp validate_expected_count(0, min, _) when min > 0 do
@@ -84,16 +121,49 @@ defmodule Diesel.Tag.Validator do
   defp validate_expected_count(_, _, _), do: :ok
 
   defp validate_unexpected_children(specs, children) do
-    Enum.reduce_while(children, :ok, fn {name, _, _}, _ ->
-      if expected?(name, specs) do
-        {:cont, :ok}
-      else
-        {:halt, {:error, "Unexpected child '#{name}'"}}
+    Enum.reduce_while(children, :ok, fn child, _ ->
+      case validate_child(child, specs) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, reason}
       end
     end)
   end
 
-  defp expected?(name, specs), do: Enum.find(specs, fn spec -> spec[:name] == name end) != nil
+  defp validate_child({name, _, _} = tag, specs) do
+    if expected_name?(name, specs) do
+      :ok
+    else
+      {:error, "Found child with unexpected name: #{inspect(tag)}"}
+    end
+  end
+
+  defp validate_child(value, specs) do
+    kind = tag_kind(value)
+
+    if expected_child_kind?(kind, specs) do
+      :ok
+    else
+      {:error, "Found child '#{inspect(value)}' of unexpected kind '#{kind}'"}
+    end
+  end
+
+  defp expected_name?(name, specs), do: Enum.find(specs, fn spec -> spec[:name] == name end)
+
+  defp expected_child_kind?(kind, specs) do
+    Enum.find(specs, fn spec -> spec[:kind] == kind end)
+  end
+
+  defp tag_kind({_, _, _}), do: :tag
+  defp tag_kind(tag) when is_number(tag), do: :number
+  defp tag_kind(tag) when is_binary(tag), do: :string
+
+  defp tag_kind(tag) when is_atom(tag) do
+    if function_exported?(tag, :__info__, 1), do: :module, else: :atom
+  end
+
+  defp tag_kind(other) do
+    raise "Unrecognized element in dsl: #{inspect(other)}"
+  end
 
   defp validate_value(nil, _, true), do: {:error, "value is missing"}
   defp validate_value(nil, _, false), do: :ok
