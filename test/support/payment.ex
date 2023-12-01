@@ -1,3 +1,9 @@
+defmodule SendToGateway do
+end
+
+defmodule NotifyParties do
+end
+
 defmodule Payment do
   @moduledoc false
   use Fsm
@@ -5,24 +11,24 @@ defmodule Payment do
   fsm do
     state :pending do
       on event: :created do
-        action(module: SendToGateway)
+        action(SendToGateway)
         next(state: :sent)
       end
     end
 
     state :sent, timeout: 60 do
       on event: :success do
-        action(module: NotifyParties)
+        action(NotifyParties)
         next(state: :accepted)
       end
 
       on event: :error do
-        action(module: NotifyParties)
+        action(NotifyParties)
         next(state: :declined)
       end
 
       on event: :timeout do
-        action(module: NotifyParties)
+        action(NotifyParties)
         next(state: :declined)
       end
     end

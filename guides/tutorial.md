@@ -12,24 +12,24 @@ defmodule MyApp.Payments.Payment do
   fsm do
     state :pending do
       on event: :created do
-        action module: SendToGateway
+        action SendToGateway
         next state: :sent
       end
     end
 
     state :sent, timeout: 60 do
       on event: :success do
-        action module: NotifyParties
+        action NotifyParties
         next state: :accepted
       end
 
       on event: :error do
-        action module: NotifyParties
+        action NotifyParties
         next state: :declined
       end
 
       on event: :timeout do
-        action module: NotifyParties
+        action NotifyParties
         next state: :declined
       end
     end
@@ -138,15 +138,29 @@ end
 
 #### The action tag
 
-The `action` tag only supports the `name` attribute.
+The `action` supports the name of an Elixir module as its ony child:
 
 ```elixir
 defmodule MyApp.Fsm.Dsl.Action do
   use Diesel.Tag
 
   tag do
-    attribute :module, kind: :module
+    child kind: :module, min: 0
   end
+end
+```
+
+In other words, when there is a single child involved, the notation
+
+```elixir
+action SomeModule
+```
+
+is equivalent to:
+
+```elixir
+action do
+  SomeModule
 end
 ```
 

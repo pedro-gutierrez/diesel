@@ -14,18 +14,18 @@ defmodule DieselTest do
                  {:state, [name: :pending],
                   [
                     {:on, [event: :created],
-                     [{:action, [module: SendToGateway], []}, {:next, [state: :sent], []}]}
+                     [{:action, [], [SendToGateway]}, {:next, [state: :sent], []}]}
                   ]},
                  {
                    :state,
                    [name: :sent, timeout: 60],
                    [
                      {:on, [event: :success],
-                      [{:action, [module: NotifyParties], []}, {:next, [state: :accepted], []}]},
+                      [{:action, [], [NotifyParties]}, {:next, [state: :accepted], []}]},
                      {:on, [event: :error],
-                      [{:action, [module: NotifyParties], []}, {:next, [state: :declined], []}]},
+                      [{:action, [], [NotifyParties]}, {:next, [state: :declined], []}]},
                      {:on, [event: :timeout],
-                      [{:action, [module: NotifyParties], []}, {:next, [state: :declined], []}]}
+                      [{:action, [], [NotifyParties]}, {:next, [state: :declined], []}]}
                    ]
                  },
                  {:state, [name: :accepted], []},
