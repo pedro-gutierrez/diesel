@@ -158,7 +158,7 @@ defmodule Diesel.Tag.Validator do
   defp tag_kind(tag) when is_binary(tag), do: :string
 
   defp tag_kind(tag) when is_atom(tag) do
-    if function_exported?(tag, :__info__, 1), do: :module, else: :atom
+    if tag |> to_string() |> String.starts_with?("Elixir."), do: :module, else: :atom
   end
 
   defp tag_kind(other) do
