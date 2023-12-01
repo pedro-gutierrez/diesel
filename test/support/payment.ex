@@ -1,7 +1,9 @@
 defmodule SendToGateway do
+  @moduledoc false
 end
 
 defmodule NotifyParties do
+  @moduledoc false
 end
 
 defmodule Payment do
