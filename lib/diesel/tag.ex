@@ -35,8 +35,11 @@ defmodule Diesel.Tag do
   @doc """
   Returns whether a tag is structured or not
   """
-  def structured?(tag),
-    do: function_exported?(tag, :name, 0) && function_exported?(tag, :validate, 1)
+  def structured?(tag) do
+    if tag |> to_string() |> String.starts_with?("Elixir."), do: Code.ensure_compiled!(tag)
+
+    function_exported?(tag, :name, 0) && function_exported?(tag, :validate, 1)
+  end
 
   @doc """
   Returns the name of the given tag
