@@ -63,7 +63,13 @@ defmodule Diesel.Dsl do
 
       def root, do: @root
       def tags, do: @tag_names
-      def local_without_parens, do: @locals_without_parens
+
+      @doc """
+      Returns the list of locals without parens function signatures, so that they can be easily
+      included in .formatter.exs files
+      """
+      @spec locals_without_parens() :: keyword()
+      def locals_without_parens, do: @locals_without_parens
 
       def validate({tag, _, children} = node) do
         with :ok <- validate(children), do: validate_node(node)

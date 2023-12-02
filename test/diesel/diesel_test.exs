@@ -6,6 +6,10 @@ defmodule DieselTest do
       assert [:fsm, :action, :next, :on, :state] == Fsm.Dsl.tags()
     end
 
+    test "export their formatter configuration" do
+      assert [fsm: :*, action: :*, next: :*, on: :*, state: :*] == Fsm.Dsl.locals_without_parens()
+    end
+
     test "produce an internal definition" do
       assert {
                :fsm,
