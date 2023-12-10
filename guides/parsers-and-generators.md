@@ -62,11 +62,12 @@ defmodule MyApp.Fsm do
 end
 ```
 
-The `Diesel` module provides with three convenience functions to traverse definitions:
+The `Diesel` module provides with several convenience functions to traverse definitions:
 
 * `children/2`: returns all children elements with the given tag name
 * `nodes/2`: returns all elements in the given list with the given tag name
 * `child/2`: returns the first child with the given tag name
+* `child/1`: returns the first child of the given element or list of elements
 
 ## Generating code
 

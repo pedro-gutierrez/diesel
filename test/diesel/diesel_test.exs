@@ -42,7 +42,8 @@ defmodule DieselTest do
       definition = Payment.definition()
 
       assert 4 == definition |> Diesel.children(:state) |> length
-      assert {:state, [name: :pending], _} = Diesel.child(definition, :state)
+      assert {:state, [name: :pending], _} = pending = Diesel.child(definition, :state)
+      assert {:on, [event: :created], _} = Diesel.child(pending)
       assert [] = Diesel.children(definition, :on)
     end
 

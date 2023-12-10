@@ -152,4 +152,10 @@ defmodule Diesel do
     |> children(name)
     |> List.first()
   end
+
+  @doc "Returns the first child of the given element, or list of elements"
+  @spec child(element() | [element()]) :: any()
+  def child({_, _, [child | _]}), do: child
+  def child(nodes) when is_list(nodes), do: Enum.map(nodes, &child/1)
+  def child(nil), do: nil
 end
