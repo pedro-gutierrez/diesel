@@ -62,6 +62,12 @@ defmodule MyApp.Fsm do
 end
 ```
 
+The `Diesel` module provides with three convenience functions to traverse definitions:
+
+* `children/2`: returns all children elements with the given tag name
+* `nodes/2`: returns all elements in the given list with the given tag name
+* `child/2`: returns the first child with the given tag name
+
 ## Generating code
 
 By implementing the `Diesel.Generator` behaviour, developers can produce elixir code, based on a DSL

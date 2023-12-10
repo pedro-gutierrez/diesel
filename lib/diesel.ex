@@ -20,6 +20,7 @@ defmodule Diesel do
   end
   ```
 
+
   For more information on how to use this library, please check:
 
   * the `Diesel.Dsl` and `Diesel.Tag` modules,
@@ -27,8 +28,11 @@ defmodule Diesel do
   * the examples used in tests
   """
 
+  @type tag() :: atom()
+  @type element() :: {tag(), keyword(), [element()]}
+
   @doc "Returns the raw definition for the dsl, before compilation"
-  @callback definition() :: term()
+  @callback definition() :: element()
 
   @doc """
   Compiles the raw definition and returns a compiled version of it
@@ -130,5 +134,22 @@ defmodule Diesel do
         end
       end
     end
+  end
+
+  @doc "Returns all children elements matching the given tag"
+  @spec children(element(), tag()) :: [element()]
+  def children({_, _, children}, name) when is_list(children), do: elements(children, name)
+
+  @doc "Returns all elements matching the given name"
+  @spec elements([element()], tag()) :: [element()]
+  def elements(elements, name) when is_list(elements),
+    do: for({^name, _, _} = element <- elements, do: element)
+
+  @doc "Returns the first child element matching the given name, from the given definition"
+  @spec child(element(), tag()) :: element() | nil
+  def child({_, _, _} = element, name) do
+    element
+    |> children(name)
+    |> List.first()
   end
 end

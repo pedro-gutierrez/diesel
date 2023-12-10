@@ -38,6 +38,14 @@ defmodule DieselTest do
              } == Payment.definition()
     end
 
+    test "can be parsed with utility functions" do
+      definition = Payment.definition()
+
+      assert 4 == definition |> Diesel.children(:state) |> length
+      assert {:state, [name: :pending], _} = Diesel.child(definition, :state)
+      assert [] = Diesel.children(definition, :on)
+    end
+
     test "are used to generate code" do
       assert Payment.diagram() =~ "digraph {"
     end
