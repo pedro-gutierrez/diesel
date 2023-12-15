@@ -2,14 +2,16 @@ name: Publish to Hex
 on:
   release:
     types: [published]
+env:
+  deps_cache_version: v2
 jobs:
   publish:
     name: Publish to Hex
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: ['1.14.3']
-        otp: ['25.2']
+        elixir: ["1.14.3"]
+        otp: ["25.2"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

@@ -2,16 +2,16 @@ name: CI
 on:
   push:
     branches:
-      - '**'
+      - "**"
 env:
-  deps_cache_version: v1
+  deps_cache_version: v2
 jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: ['1.14.3']
-        otp: ['25.2']
+        elixir: ["1.14.3"]
+        otp: ["25.2"]
     steps:
       - name: Checkout Github repo
         uses: actions/checkout@v3
