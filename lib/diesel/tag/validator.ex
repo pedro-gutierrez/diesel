@@ -83,7 +83,7 @@ defmodule Diesel.Tag.Validator do
 
   defp find_matching_children(children, spec) do
     name = Keyword.get(spec, :name)
-    kind = spec |> Keyword.get(:kind, :tag) |> ensure_valid_kind!()
+    kind = spec |> Keyword.get(:kind, :tag) |> ensure_valid_kind!(spec)
     find_matching_children(children, name, kind)
   end
 
@@ -100,11 +100,12 @@ defmodule Diesel.Tag.Validator do
     end)
   end
 
-  @valid_kinds [:tag, :module, :boolean, :number, :string]
+  @valid_kinds [:tag, :atom, :module, :boolean, :number, :string]
 
-  defp ensure_valid_kind!(kind) do
+  defp ensure_valid_kind!(kind, spec) do
     unless Enum.member?(@valid_kinds, kind) do
-      raise "Found kind '#{kind}', in tag definition, but only #{inspect(@valid_kinds)} are accepted"
+      raise "Found kind '#{kind}', in tag definition, but only #{inspect(@valid_kinds)} are
+        accepted. In: #{inspect(spec)}"
     end
 
     kind
