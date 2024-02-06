@@ -84,10 +84,12 @@ defmodule Diesel.Dsl do
         end)
       end
 
+      def validate(_), do: :ok
+
       defp validate_node({tag, _, _} = node) do
         case Map.get(@tags_by_name, tag) do
           nil ->
-            {:error, "Unsupported tag #{inspect(tag)}"}
+            {:error, "Unsupported tag '#{inspect(tag)}'"}
 
           tag ->
             with {:error, reason} <- Tag.validate(tag, node) do
@@ -95,8 +97,6 @@ defmodule Diesel.Dsl do
             end
         end
       end
-
-      def validate(_), do: :ok
 
       defmacro unquote(root_name)(do: {:__block__, [], children}) do
         quote do
@@ -177,7 +177,11 @@ defmodule Diesel.Dsl do
             end
 
             defmacro unquote(tag)(attrs) when is_list(attrs) do
-              {:{}, [line: 1], [unquote(tag), attrs, []]}
+              if Keyword.keyword?(attrs) do
+                {:{}, [line: 1], [unquote(tag), attrs, []]}
+              else
+                {:{}, [line: 1], [unquote(tag), [], attrs]}
+              end
             end
 
             defmacro unquote(tag)(child) do

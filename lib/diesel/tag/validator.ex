@@ -125,7 +125,7 @@ defmodule Diesel.Tag.Validator do
     Enum.reduce_while(children, :ok, fn child, _ ->
       case validate_child(child, specs) do
         :ok -> {:cont, :ok}
-        {:error, reason} -> {:halt, reason}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
   end
