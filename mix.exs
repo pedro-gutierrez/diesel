@@ -1,7 +1,7 @@
 defmodule Diesel.MixProject do
   use Mix.Project
 
-  @version "0.5.6"
+  @version "0.5.7"
 
   def project do
     [
@@ -39,8 +39,8 @@ defmodule Diesel.MixProject do
 
   defp deps do
     [
-      {:credo, "~> 1.7"},
-      {:ex_doc, ">= 0.0.0"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:solid, "~> 0.15"}
     ]
   end
