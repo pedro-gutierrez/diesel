@@ -34,9 +34,14 @@ defmodule Diesel.Tag.Validator do
            :ok <- validate_allowed(attr_value, allowed_values) do
         {:cont, :ok}
       else
-        {:error, reason} -> {:halt, {:error, "Error in attribute '#{attr_name}'. #{reason}"}}
+        {:error, reason} ->
+          {:halt, attribute_error(attr_name, attr_value, reason)}
       end
     end)
+  end
+
+  defp attribute_error(name, value, reason) do
+    {:error, "Error in attribute '#{name}' of value '#{value}': #{reason}"}
   end
 
   defp validate_unexpected_attributes(specs, attrs) do
@@ -58,6 +63,7 @@ defmodule Diesel.Tag.Validator do
   defp validate_expected_children(specs, children) do
     Enum.reduce_while(specs, :ok, fn spec, _ ->
       children = find_matching_children(children, spec)
+
       min = Keyword.get(spec, :min, 0)
       max = Keyword.get(spec, :max, :any)
       actual = Enum.count(children)
@@ -84,7 +90,12 @@ defmodule Diesel.Tag.Validator do
   defp find_matching_children(children, spec) do
     name = Keyword.get(spec, :name)
     kind = spec |> Keyword.get(:kind, :tag) |> ensure_valid_kind!(spec)
+
     find_matching_children(children, name, kind)
+  end
+
+  defp find_matching_children(children, nil, :any) do
+    children
   end
 
   defp find_matching_children(children, name, :tag) do
@@ -100,7 +111,7 @@ defmodule Diesel.Tag.Validator do
     end)
   end
 
-  @valid_kinds [:tag, :atom, :module, :boolean, :number, :string]
+  @valid_kinds [:tag, :atom, :module, :boolean, :number, :string, :any]
 
   defp ensure_valid_kind!(kind, spec) do
     unless Enum.member?(@valid_kinds, kind) do
@@ -148,10 +159,11 @@ defmodule Diesel.Tag.Validator do
     end
   end
 
-  defp expected_name?(name, specs), do: Enum.find(specs, fn spec -> spec[:name] == name end)
+  defp expected_name?(name, specs),
+    do: Enum.find(specs, fn spec -> is_nil(spec[:name]) || spec[:name] == name end)
 
   defp expected_child_kind?(kind, specs) do
-    Enum.find(specs, fn spec -> spec[:kind] == kind end)
+    Enum.find(specs, fn spec -> spec[:kind] == :any || spec[:kind] == kind end)
   end
 
   defp tag_kind({_, _, _}), do: :tag
