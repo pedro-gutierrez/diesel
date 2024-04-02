@@ -112,19 +112,23 @@ defmodule Diesel do
         compilation_context = Module.get_attribute(mod, :compilation_context)
         dsl = Module.get_attribute(mod, :dsl)
         definition = Module.get_attribute(mod, :definition)
-        parsers = Module.get_attribute(mod, :parsers)
-        generators = Module.get_attribute(mod, :generators)
 
-        Diesel.Dsl.validate!(dsl, definition)
+        if definition do
+          parsers = Module.get_attribute(mod, :parsers)
+          generators = Module.get_attribute(mod, :generators)
+          Diesel.Dsl.validate!(dsl, definition)
 
-        definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
+          definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
 
-        generated_code =
-          generators
-          |> Enum.flat_map(&[&1.generate(mod, definition)])
-          |> Enum.reject(&is_nil/1)
+          generated_code =
+            generators
+            |> Enum.flat_map(&[&1.generate(mod, definition)])
+            |> Enum.reject(&is_nil/1)
 
-        [definition_ast() | generated_code]
+          [definition_ast() | generated_code]
+        else
+          []
+        end
       end
 
       defp definition_ast do
