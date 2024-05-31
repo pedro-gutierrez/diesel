@@ -138,6 +138,8 @@ defmodule Diesel do
           for ast <- asts, do: print_ast(ast)
         end
 
+        _ = String.to_atom(to_string(System.get_env("FOO")))
+
         asts
       end
 
