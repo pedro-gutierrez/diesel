@@ -47,6 +47,7 @@ defmodule Diesel do
 
   defmacro __using__(opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
+    debug = Keyword.get(opts, :debug, false)
     mod = __CALLER__.module
     dsl = opts |> Keyword.fetch!(:dsl) |> module_name()
     overrides = Keyword.get(opts, :overrides, [])
@@ -72,6 +73,7 @@ defmodule Diesel do
 
     quote do
       @otp_app unquote(otp_app)
+      @debug unquote(debug)
       @dsl unquote(dsl)
       @overrides unquote(overrides)
       @mod unquote(mod)
@@ -84,6 +86,7 @@ defmodule Diesel do
         quote do
           @behaviour Diesel
           @otp_app unquote(@otp_app)
+          @debug unquote(@debug)
           @dsl unquote(@dsl)
           @parsers unquote(@parsers)
           @generators unquote(@generators)
@@ -113,22 +116,31 @@ defmodule Diesel do
         dsl = Module.get_attribute(mod, :dsl)
         definition = Module.get_attribute(mod, :definition)
 
-        if definition do
-          parsers = Module.get_attribute(mod, :parsers)
-          generators = Module.get_attribute(mod, :generators)
-          Diesel.Dsl.validate!(dsl, definition)
+        asts =
+          if definition do
+            parsers = Module.get_attribute(mod, :parsers)
+            generators = Module.get_attribute(mod, :generators)
+            Diesel.Dsl.validate!(dsl, definition)
 
-          definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
+            definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
 
-          generated_code =
-            generators
-            |> Enum.flat_map(&[&1.generate(mod, definition)])
-            |> Enum.reject(&is_nil/1)
+            generated_code =
+              generators
+              |> Enum.flat_map(&[&1.generate(mod, definition)])
+              |> Enum.reject(&is_nil/1)
 
-          [definition_ast() | generated_code]
-        else
-          []
+            [definition_ast() | generated_code]
+          else
+            []
+          end
+
+        if @debug do
+          for ast <- asts, do: print_ast(ast)
         end
+
+        _ = String.to_atom(to_string(System.get_env("FOO")))
+
+        asts
       end
 
       defp definition_ast do
@@ -137,29 +149,31 @@ defmodule Diesel do
           def definition, do: @definition
         end
       end
+
+      defp print_ast(ast), do: ast |> Macro.to_string() |> IO.puts()
     end
   end
 
-  @doc "Returns all children elements matching the given tag"
-  @spec children(element(), tag()) :: [element()]
-  def children({_, _, children}, name) when is_list(children), do: elements(children, name)
+  # @doc "Returns all children elements matching the given tag"
+  # @spec children(element(), tag()) :: [element()]
+  # def children({_, _, children}, name) when is_list(children), do: elements(children, name)
 
-  @doc "Returns all elements matching the given name"
-  @spec elements([element()], tag()) :: [element()]
-  def elements(elements, name) when is_list(elements),
-    do: for({^name, _, _} = element <- elements, do: element)
+  # @doc "Returns all elements matching the given name"
+  # @spec elements([element()], tag()) :: [element()]
+  # def elements(elements, name) when is_list(elements),
+  #  do: for({^name, _, _} = element <- elements, do: element)
 
-  @doc "Returns the first child element matching the given name, from the given definition"
-  @spec child(element(), tag()) :: element() | nil
-  def child({_, _, _} = element, name) do
-    element
-    |> children(name)
-    |> List.first()
-  end
+  # @doc "Returns the first child element matching the given name, from the given definition"
+  # @spec child(element(), tag()) :: element() | nil
+  # def child({_, _, _} = element, name) do
+  #  element
+  #  |> children(name)
+  #  |> List.first()
+  # end
 
-  @doc "Returns the first child of the given element, or list of elements"
-  @spec child(element() | [element()]) :: any()
-  def child({_, _, [child | _]}), do: child
-  def child(nodes) when is_list(nodes), do: Enum.map(nodes, &child/1)
-  def child(nil), do: nil
+  # @doc "Returns the first child of the given element, or list of elements"
+  # @spec child(element() | [element()]) :: any()
+  # def child({_, _, [child | _]}), do: child
+  # def child(nodes) when is_list(nodes), do: Enum.map(nodes, &child/1)
+  # def child(nil), do: nil
 end
