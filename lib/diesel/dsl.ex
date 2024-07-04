@@ -27,7 +27,10 @@ defmodule Diesel.Dsl do
   defmacro __using__(opts) do
     dsl = __CALLER__.module
     otp_app = Keyword.fetch!(opts, :otp_app)
-    root = opts |> Keyword.fetch!(:root) |> module_name()
+    default_root_tag = dsl |> Module.split() |> Enum.drop(-1) |> List.last()
+    default_root_tag = Module.concat(dsl, default_root_tag)
+
+    root = opts |> Keyword.get(:root, default_root_tag) |> module_name()
     default_tags = Keyword.get(opts, :tags, [])
 
     default_packages =

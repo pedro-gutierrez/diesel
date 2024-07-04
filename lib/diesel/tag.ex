@@ -18,7 +18,7 @@ defmodule Diesel.Tag do
 
   use Diesel,
     otp_app: :diesel,
-    dsl: Diesel.Tag.Dsl,
+    parsers: [],
     generators: [
       Diesel.Tag.Generator
     ]

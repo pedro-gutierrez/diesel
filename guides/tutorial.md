@@ -51,11 +51,20 @@ First, lets define the `MyApp.Fsm` library module:
 defmodule MyApp.Fsm do
   use Diesel,
     otp_app: :my_app,
-    dsl: MyApp.Dsm.Dsl
+    dsl: MyApp.Dsm.Dsl  # optional
 end
 ```
 
 This module will import the api offered by the actual, which will be defined by a delegate module `MyApp.Fsm.Dsl`.
+
+**Note**: the `:dsl` key is optional. If omitted, it will default to the caller module, suffixed by
+`Dsl`. The above example is equivalent to:
+
+```elixir
+defmodule MyApp.Fsm do
+  use Diesel, otp_app: :my_app,
+end
+``
 
 ## Defining the DSL
 
@@ -72,12 +81,25 @@ We will need the following elements of the language:
 defmodule MyApp.Fsm.Dsl do
   use Diesel.Dsl,
     otp_app: :my_app,
-    root: MyApp.Fsm.Dsl.Fsm,
+    root: MyApp.Fsm.Dsl.Fsm, # optional
     tags: [
       MyApp.Fsm.Dsl.Action,
       MyApp.Fsm.Dsl.Next,
       MyApp.Fsm.Dsl.On,
       MyApp.Fsm.Dsl.State
+    ]
+end
+```
+
+**Note**: the `:root` key is optional. If ommitted, a naming convention will be applied, so that the
+above example is equivalent to:
+
+```elixir
+defmodule MyApp.Fsm.Dsl do
+  use Diesel.Dsl,
+    otp_app: :my_app,
+    tags: [
+      ...
     ]
 end
 ```
@@ -226,12 +248,35 @@ defmodule MyApp.Fsm do
     otp_app: ...,
     dsl: ...,
     parsers: [
-      Fsm.Parser
+      MyApp.Fsm.Parser
     ]
 end
 ```
 
 Please check the `Fsm.Parser` module included in `test/support/fsm.ex`.
+
+**Note**: the `:parsers` key is optional. If omitted, a default parser will be used, by appending
+the `Parser` suffix to the caller module. The above example is equivalent to:
+
+```elixir
+defmodule MyApp.Fsm do
+  use Diesel,
+    otp_app: ...,
+    dsl: ...,
+end
+```
+
+**Note**: in reality, parsers are optional. If you wish to skip them entirely, you can set an empty
+list:
+
+```elixir
+defmodule MyApp.Fsm do
+  use Diesel,
+    otp_app: ...,
+    dsl: ...,
+    parsers: []
+end
+```
 
 ## Generating code
 

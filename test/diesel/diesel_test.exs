@@ -2,6 +2,18 @@ defmodule DieselTest do
   use ExUnit.Case
 
   describe "dsls" do
+    test "have a default root tag" do
+      assert Fsm.Dsl.root() == :fsm
+    end
+
+    test "have a default parser" do
+      assert Fsm.parsers() == [Fsm.Parser]
+    end
+
+    test "have a default dsl" do
+      assert Fsm.dsl() == Fsm.Dsl
+    end
+
     test "are made of tags" do
       assert [:fsm, :action, :next, :on, :state] == Fsm.Dsl.tags()
     end
