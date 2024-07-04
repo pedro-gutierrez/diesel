@@ -51,7 +51,6 @@ defmodule Fsm.Dsl do
   @moduledoc false
   use Diesel.Dsl,
     otp_app: :diesel,
-    root: Fsm.Dsl.Fsm,
     tags: [
       Fsm.Dsl.Action,
       Fsm.Dsl.Next,
@@ -135,10 +134,7 @@ defmodule Fsm do
   @moduledoc false
   use Diesel,
     otp_app: :diesel,
-    dsl: Fsm.Dsl,
-    parsers: [
-      Fsm.Parser
-    ],
+    debug: true,
     generators: [
       Fsm.Diagram
     ]

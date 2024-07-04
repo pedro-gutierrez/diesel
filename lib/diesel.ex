@@ -42,13 +42,15 @@ defmodule Diesel do
   """
   @callback compile(context :: map()) :: term()
 
-  alias Diesel.Parser
   import Diesel.Naming
 
   defmacro __using__(opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
     mod = __CALLER__.module
-    dsl = opts |> Keyword.fetch!(:dsl) |> module_name()
+    default_dsl = Module.concat(mod, Dsl)
+    default_parser = Module.concat(mod, Parser)
+
+    dsl = opts |> Keyword.get(:dsl, default_dsl) |> module_name()
     overrides = Keyword.get(opts, :overrides, [])
     compilation_flags = Keyword.get(opts, :compilation_flags, [])
 
@@ -61,12 +63,12 @@ defmodule Diesel do
     generators = Enum.map(generators, &module_name/1)
 
     parsers =
-      Keyword.get(opts, :parsers, []) ++
+      Keyword.get(opts, :parsers, [default_parser]) ++
         (otp_app
          |> Application.get_env(mod, [])
          |> Keyword.get(:parsers, []))
 
-    parsers = Enum.map(compilation_flags, &Parser.named/1) ++ parsers
+    parsers = Enum.map(compilation_flags, &Diesel.Parser.named/1) ++ parsers
 
     parsers = Enum.map(parsers, &module_name/1)
 
@@ -77,6 +79,9 @@ defmodule Diesel do
       @mod unquote(mod)
       @parsers unquote(parsers)
       @generators unquote(generators)
+
+      def parsers, do: @parsers
+      def dsl, do: @dsl
 
       defmacro __using__(_) do
         mod = __CALLER__.module
