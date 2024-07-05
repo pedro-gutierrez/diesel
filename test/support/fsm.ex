@@ -69,7 +69,7 @@ defmodule Fsm.Parser do
   @behaviour Diesel.Parser
 
   @impl true
-  def parse(_fsm, {:fsm, [], states}) do
+  def parse({:fsm, [], states}, _opts) do
     for {:state, state, events} <- states,
         {:on, event, transition} <- events do
       next_state = next_state(transition)
@@ -111,7 +111,7 @@ defmodule Fsm.Diagram do
   @behaviour Diesel.Generator
 
   @impl true
-  def generate(_fsm, transitions) do
+  def generate(transitions, _) do
     transitions =
       Enum.map_join(transitions, "\n", fn t ->
         "#{t.from} -> #{t.to} [label=\"#{t.event}\""
@@ -134,7 +134,6 @@ defmodule Fsm do
   @moduledoc false
   use Diesel,
     otp_app: :diesel,
-    debug: true,
     generators: [
       Fsm.Diagram
     ]

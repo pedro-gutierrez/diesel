@@ -2,7 +2,12 @@ defmodule Diesel.Generator do
   @moduledoc """
   Generators produce actual Elixir code from DSLs.
 
-  Given a caller module and a dsl definition, a generator returns one or multiple quoted expressions.
+  Given a definition, a generator returns one or multiple quoted expressions.
+
+  The following info are passed in the keyword list of options:
+
+  - `:otp_app`
+  - `:caller_module`
   """
-  @callback generate(target :: module(), definition :: term()) :: Macro.t() | [Macro.t()]
+  @callback generate(definition :: term(), opts :: Keyword.t()) :: Macro.t() | [Macro.t()]
 end

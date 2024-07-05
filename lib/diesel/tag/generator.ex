@@ -3,7 +3,9 @@ defmodule Diesel.Tag.Generator do
   @behaviour Diesel.Generator
 
   @impl Diesel.Generator
-  def generate(tag, schema) do
+  def generate(schema, opts) do
+    tag = Keyword.fetch!(opts, :caller_module)
+
     tag_name = tag |> Module.split() |> List.last() |> Macro.underscore() |> String.to_atom()
 
     quote do
