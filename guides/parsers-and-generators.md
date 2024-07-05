@@ -41,7 +41,7 @@ defmodule MyApp.Fsm.MyParser do
   @behaviour Diesel.Parser
 
   @impl true
-  def parse(caller, {:fsm, [], states}) do
+  def parse({:fsm, [], states}, _opts) do
     %Fsm{states: [...]}
   end
 end
@@ -93,7 +93,7 @@ defmodule MyApp.Fsm.Generator.GenServer do
   @behaviour Diesel.Generator
 
   @impl true
-  def generate(caller, definition) do
+  def generate(definition, _opts) do
     quote do
       use GenServer
       ...

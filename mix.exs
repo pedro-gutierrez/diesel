@@ -1,7 +1,7 @@
 defmodule Diesel.MixProject do
   use Mix.Project
 
-  @version "0.5.9"
+  @version "0.6.0"
 
   def project do
     [
@@ -60,7 +60,8 @@ defmodule Diesel.MixProject do
       "guides/tutorial.md",
       "guides/parsers-and-generators.md",
       "guides/unstructured-tags.md",
-      "guides/extensibility.md"
+      "guides/extensibility.md",
+      "guides/debug.md"
     ]
   end
 end

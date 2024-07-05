@@ -5,14 +5,14 @@ defmodule Diesel.Parser do
   Example:
 
   ```elixir
-  def parse(caller_module, {:music, attrs, children}) do
+  def parse({:music, attrs, children}, _opts) do
     # eg return some struct here
   end
   ```
 
   Parsing a definition is an optional step.
   """
-  @callback parse(caller_module :: module(), definition :: term()) :: term()
+  @callback parse(definition :: term(), opts :: keyword()) :: term()
 
   @doc """
   Returns a built-in parser, given its name

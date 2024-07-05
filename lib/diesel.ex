@@ -83,8 +83,9 @@ defmodule Diesel do
       def parsers, do: @parsers
       def dsl, do: @dsl
 
-      defmacro __using__(_) do
+      defmacro __using__(opts) do
         mod = __CALLER__.module
+        opts = Keyword.put(opts, :caller_module, mod)
 
         quote do
           @behaviour Diesel
@@ -96,7 +97,7 @@ defmodule Diesel do
           import Kernel, except: unquote(@overrides)
           import unquote(@dsl), only: :macros
           @before_compile unquote(@mod)
-
+          @opts unquote(opts)
           @compilation_context @otp_app
                                |> Application.compile_env(__MODULE__, [])
                                |> Keyword.get(:compilation_context, %{})
@@ -114,26 +115,37 @@ defmodule Diesel do
 
       defmacro __before_compile__(_env) do
         mod = __CALLER__.module
+        opts = Module.get_attribute(mod, :opts)
         compilation_context = Module.get_attribute(mod, :compilation_context)
         dsl = Module.get_attribute(mod, :dsl)
         definition = Module.get_attribute(mod, :definition)
 
-        if definition do
-          parsers = Module.get_attribute(mod, :parsers)
-          generators = Module.get_attribute(mod, :generators)
-          Diesel.Dsl.validate!(dsl, definition)
+        code =
+          if definition do
+            parsers = Module.get_attribute(mod, :parsers)
+            generators = Module.get_attribute(mod, :generators)
+            Diesel.Dsl.validate!(dsl, definition)
 
-          definition = Enum.reduce(parsers, definition, & &1.parse(mod, &2))
+            definition = Enum.reduce(parsers, definition, & &1.parse(&2, opts))
 
-          generated_code =
-            generators
-            |> Enum.flat_map(&[&1.generate(mod, definition)])
-            |> Enum.reject(&is_nil/1)
+            generated_code =
+              generators
+              |> Enum.flat_map(&[&1.generate(definition, opts)])
+              |> Enum.reject(&is_nil/1)
 
-          [definition_ast() | generated_code]
-        else
-          []
+            [definition_ast() | generated_code]
+          else
+            []
+          end
+
+        if opts[:debug] do
+          code
+          |> Macro.to_string()
+          |> Code.format_string!()
+          |> IO.puts()
         end
+
+        code
       end
 
       defp definition_ast do

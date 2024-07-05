@@ -7,7 +7,7 @@ defmodule Diesel.Parser.StripRoot do
   @behaviour Diesel.Parser
 
   @impl true
-  def parse(_caller, definition), do: strip_root(definition)
+  def parse(definition, _opts), do: strip_root(definition)
 
   defp strip_root({_, _, [child]}), do: child
   defp strip_root({_, _, children}), do: children
