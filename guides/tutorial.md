@@ -55,16 +55,15 @@ defmodule MyApp.Fsm do
 end
 ```
 
-This module will import the api offered by the actual, which will be defined by a delegate module `MyApp.Fsm.Dsl`.
+This module will import the api offered by the actual dsl, to be implemented in this example by module `MyApp.Fsm.Dsl`.
 
-**Note**: the `:dsl` key is optional. If omitted, it will default to the caller module, suffixed by
-`Dsl`. The above example is equivalent to:
+The `:dsl` key is optional. If omitted, it will default to the caller module, suffixed by `Dsl`. The above example is equivalent to:
 
 ```elixir
 defmodule MyApp.Fsm do
-  use Diesel, otp_app: :my_app,
+  use Diesel, otp_app: :my_app
 end
-``
+```
 
 ## Defining the DSL
 
@@ -91,7 +90,7 @@ defmodule MyApp.Fsm.Dsl do
 end
 ```
 
-**Note**: the `:root` key is optional. If ommitted, a naming convention will be applied, so that the
+The `:root` key is optional. If omitted, a naming convention will be applied, so that the
 above example is equivalent to:
 
 ```elixir
@@ -160,7 +159,7 @@ end
 
 #### The action tag
 
-The `action` supports the name of an Elixir module as its ony child:
+The `action` supports the name of an Elixir module as its only child:
 
 ```elixir
 defmodule MyApp.Fsm.Dsl.Action do
@@ -172,7 +171,7 @@ defmodule MyApp.Fsm.Dsl.Action do
 end
 ```
 
-In other words, when there is a single child involved, the notation
+When there is a single child involved, the notation
 
 ```elixir
 action SomeModule
@@ -255,7 +254,7 @@ end
 
 Please check the `Fsm.Parser` module included in `test/support/fsm.ex`.
 
-**Note**: the `:parsers` key is optional. If omitted, a default parser will be used, by appending
+The `:parsers` key is optional. If omitted, a default parser will be used, by appending
 the `Parser` suffix to the caller module. The above example is equivalent to:
 
 ```elixir
@@ -266,8 +265,7 @@ defmodule MyApp.Fsm do
 end
 ```
 
-**Note**: in reality, parsers are optional. If you wish to skip them entirely, you can set an empty
-list:
+In reality, parsers are optional. If you wish to skip them entirely, you can set an empty list:
 
 ```elixir
 defmodule MyApp.Fsm do
@@ -282,7 +280,9 @@ end
 
 Once our state machine is parsed into a list of transitions, we can then generate any custom code of our choice and inject it into our `MyApp.Fsm` module.
 
-Generated code is provided by implementations of the `Diesel.Generator` behaviour. For example, in order to generate a `diagram/0` function that returns a Graphviz diagram for our state machine, we could make use of module `Fsm.Diagram`, also included in `test/support/fsm.ex`:
+Generated code is provided by implementations of the `Diesel.Generator` behaviour. A generator returns one or more Elixir quoted expressions from its `generate/2` callback.
+
+For example, in order to generate a `diagram/0` function that returns a Graphviz diagram for our state machine, we could make use of module `Fsm.Diagram`, also included in `test/support/fsm.ex`:
 
 ```elixir
 defmodule MyApp.Fsm do

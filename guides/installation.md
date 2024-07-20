@@ -5,7 +5,7 @@ The package can be installed by adding `diesel` to your list of dependencies in 
 ```elixir
 def deps do
   [
-    {:diesel, "~> 0.5"}
+    {:diesel, "~> 0.7"}
   ]
 end
 ```

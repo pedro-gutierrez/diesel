@@ -34,14 +34,6 @@ defmodule Diesel do
   @doc "Returns the raw definition for the dsl, before compilation"
   @callback definition() :: element()
 
-  @doc """
-  Compiles the raw definition and returns a compiled version of it
-
-  The obtained structure is the result of applying the configured list of parsers to the raw
-  internal definition and then compiling it according to the rules implemented by packages.
-  """
-  @callback compile(context :: map()) :: term()
-
   import Diesel.Naming
 
   defmacro __using__(opts) do
@@ -52,25 +44,8 @@ defmodule Diesel do
 
     dsl = opts |> Keyword.get(:dsl, default_dsl) |> module_name()
     overrides = Keyword.get(opts, :overrides, [])
-    compilation_flags = Keyword.get(opts, :compilation_flags, [])
-
-    generators =
-      Keyword.get(opts, :generators, []) ++
-        (otp_app
-         |> Application.get_env(mod, [])
-         |> Keyword.get(:generators, []))
-
-    generators = Enum.map(generators, &module_name/1)
-
-    parsers =
-      Keyword.get(opts, :parsers, [default_parser]) ++
-        (otp_app
-         |> Application.get_env(mod, [])
-         |> Keyword.get(:parsers, []))
-
-    parsers = Enum.map(compilation_flags, &Diesel.Parser.named/1) ++ parsers
-
-    parsers = Enum.map(parsers, &module_name/1)
+    generators = opts |> Keyword.get(:generators, []) |> Enum.map(&module_name/1)
+    parsers = opts |> Keyword.get(:parsers, [default_parser]) |> Enum.map(&module_name/1)
 
     quote do
       @otp_app unquote(otp_app)
@@ -98,25 +73,12 @@ defmodule Diesel do
           import unquote(@dsl), only: :macros
           @before_compile unquote(@mod)
           @opts unquote(opts)
-          @compilation_context @otp_app
-                               |> Application.compile_env(__MODULE__, [])
-                               |> Keyword.get(:compilation_context, %{})
-
-          @impl Diesel
-          def compile(ctx \\ %{}) do
-            ctx = Map.merge(@compilation_context, Map.new(ctx))
-
-            @parsers
-            |> Enum.reduce(definition(), & &1.parse(__MODULE__, &2))
-            |> @dsl.compile(ctx)
-          end
         end
       end
 
       defmacro __before_compile__(_env) do
         mod = __CALLER__.module
         opts = Module.get_attribute(mod, :opts)
-        compilation_context = Module.get_attribute(mod, :compilation_context)
         dsl = Module.get_attribute(mod, :dsl)
         definition = Module.get_attribute(mod, :definition)
 
