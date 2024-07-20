@@ -54,18 +54,21 @@ defmodule Diesel.Dsl do
     tag_names = Map.keys(tags_by_name)
     root_name = Tag.name(root)
 
+    tag_names = tag_names -- [root_name]
+
     tags_by_name = Map.put(tags_by_name, root_name, root)
 
     quote do
       @before_compile Diesel.Dsl
       @root unquote(root_name)
-      @tag_names unquote([root_name | tag_names])
+      @tag_names unquote(tag_names)
+      @all_tags_names [@root | @tag_names]
       @tags_by_name unquote(Macro.escape(tags_by_name))
       @packages unquote(packages)
-      @locals_without_parens for tag <- @tag_names, do: {tag, :*}
+      @locals_without_parens for tag <- @all_tags_names, do: {tag, :*}
 
       def root, do: @root
-      def tags, do: @tag_names
+      def tags, do: @all_tags_names
 
       @doc """
       Returns the list of locals without parens function signatures, so that they can be easily
