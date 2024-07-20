@@ -40,8 +40,7 @@ defmodule Diesel.MixProject do
   defp deps do
     [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:solid, "~> 0.15"}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
@@ -58,9 +57,10 @@ defmodule Diesel.MixProject do
       "guides/overview.md",
       "guides/installation.md",
       "guides/tutorial.md",
-      "guides/parsers-and-generators.md",
+      "guides/parsers.md",
+      "guides/generators.md",
       "guides/unstructured-tags.md",
-      "guides/extensibility.md",
+      "guides/kernel-conflicts.md",
       "guides/debug.md"
     ]
   end
