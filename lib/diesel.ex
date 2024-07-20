@@ -156,27 +156,4 @@ defmodule Diesel do
       end
     end
   end
-
-  @doc "Returns all children elements matching the given tag"
-  @spec children(element(), tag()) :: [element()]
-  def children({_, _, children}, name) when is_list(children), do: elements(children, name)
-
-  @doc "Returns all elements matching the given name"
-  @spec elements([element()], tag()) :: [element()]
-  def elements(elements, name) when is_list(elements),
-    do: for({^name, _, _} = element <- elements, do: element)
-
-  @doc "Returns the first child element matching the given name, from the given definition"
-  @spec child(element(), tag()) :: element() | nil
-  def child({_, _, _} = element, name) do
-    element
-    |> children(name)
-    |> List.first()
-  end
-
-  @doc "Returns the first child of the given element, or list of elements"
-  @spec child(element() | [element()]) :: any()
-  def child({_, _, [child | _]}), do: child
-  def child(nodes) when is_list(nodes), do: Enum.map(nodes, &child/1)
-  def child(nil), do: nil
 end
