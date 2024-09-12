@@ -12,7 +12,7 @@ defmodule Fsm.Dsl.State do
   use Diesel.Tag
 
   tag do
-    attribute :name, kind: :atom, allowed: [:pending, :sent, :accepted, :declined]
+    attribute :name, kind: :atom, in: [:pending, :sent, :accepted, :declined]
     attribute :timeout, kind: :number, required: false
     child :on, min: 0
   end
@@ -43,7 +43,7 @@ defmodule Fsm.Dsl.Next do
   use Diesel.Tag
 
   tag do
-    attribute :state, kind: :atom, allowed: [:pending, :sent, :accepted, :declined]
+    attribute :state, kind: :atom, in: [:pending, :sent, :accepted, :declined]
   end
 end
 
