@@ -10,7 +10,7 @@ defmodule Diesel.Tag.Validator do
   Validates the given node, against the given schema
   """
   @spec validate(node :: tuple(), schema :: tuple()) :: :ok | {:error, any()}
-  def validate({_tag, attrs, children}, schema) do
+  def validate({_tag, attrs, children} = node, schema) do
     attr_specs = specs(schema, :attribute)
     child_specs = specs(schema, :child)
 
@@ -18,6 +18,9 @@ defmodule Diesel.Tag.Validator do
          :ok <- validate_unexpected_attributes(attr_specs, attrs),
          :ok <- validate_expected_children(child_specs, children) do
       validate_unexpected_children(child_specs, children)
+    else
+      {:error, reason} ->
+        {:error, reason <> ". In: #{inspect(node)}"}
     end
   end
 
@@ -27,7 +30,7 @@ defmodule Diesel.Tag.Validator do
       default = Keyword.get(spec, :default, nil)
       kind = Keyword.get(spec, :kind, :string)
       required = Keyword.get(spec, :required, true)
-      allowed_values = Keyword.get(spec, :allowed, [])
+      allowed_values = Keyword.get(spec, :in, [])
       attr_value = attrs[attr_name] || default
 
       with :ok <- validate_value(attr_value, kind, required),
