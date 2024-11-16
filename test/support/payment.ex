@@ -10,7 +10,7 @@ defmodule Payment do
   @moduledoc false
   use Fsm
 
-  fsm do
+  fsm "payment" do
     state :pending do
       on event: :created do
         action(SendToGateway)

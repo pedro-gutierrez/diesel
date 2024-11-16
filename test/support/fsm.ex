@@ -3,6 +3,7 @@ defmodule Fsm.Dsl.Fsm do
   use Diesel.Tag
 
   tag do
+    attribute :name, kind: :string
     child :state, min: 1
   end
 end
@@ -69,7 +70,7 @@ defmodule Fsm.Parser do
   @behaviour Diesel.Parser
 
   @impl true
-  def parse({:fsm, [], states}, _opts) do
+  def parse({:fsm, [name: _], states}, _opts) do
     for {:state, state, events} <- states,
         {:on, event, transition} <- events do
       next_state = next_state(transition)
