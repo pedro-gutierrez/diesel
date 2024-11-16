@@ -25,7 +25,7 @@ defmodule DieselTest do
     test "produce an internal definition" do
       assert {
                :fsm,
-               [],
+               [name: "payment"],
                [
                  {:state, [name: :pending],
                   [
