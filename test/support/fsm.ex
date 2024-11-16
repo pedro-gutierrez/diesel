@@ -3,6 +3,7 @@ defmodule Fsm.Dsl.Fsm do
   use Diesel.Tag
 
   tag do
+    attribute :name, kind: :string
     child :state, min: 1
   end
 end

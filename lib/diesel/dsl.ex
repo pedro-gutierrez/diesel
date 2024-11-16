@@ -95,21 +95,39 @@ defmodule Diesel.Dsl do
         end
       end
 
-      defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) do
+      defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) when is_list(attrs) do
         quote do
           @definition {unquote(@root), unquote(attrs), unquote(children)}
         end
       end
 
-      defmacro unquote(root_name)(attrs, do: child) do
+      defmacro unquote(root_name)(name, do: {:__block__, [], children}) do
+        quote do
+          @definition {unquote(@root), [name: unquote(name)], unquote(children)}
+        end
+      end
+
+      defmacro unquote(root_name)(attrs, do: child) when is_list(attrs) do
         quote do
           @definition {unquote(@root), unquote(attrs), [unquote(child)]}
         end
       end
 
-      defmacro unquote(root_name)(attrs, child) do
+      defmacro unquote(root_name)(name, do: child) do
+        quote do
+          @definition {unquote(@root), [name: unquote(name)], [unquote(child)]}
+        end
+      end
+
+      defmacro unquote(root_name)(attrs, child) when is_list(attrs) do
         quote do
           @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        end
+      end
+
+      defmacro unquote(root_name)(name, child) do
+        quote do
+          @definition {unquote(@root), [name: unquote(name)], [unquote(child)]}
         end
       end
 
