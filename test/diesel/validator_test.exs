@@ -15,5 +15,12 @@ defmodule Diesel.ValidatorTest do
       schema = {:tag, [], [{:child, [kind: :any, min: 2, max: 2], []}]}
       assert :ok == Validator.validate(node, schema)
     end
+
+    test "allows generic attributes with unspecified names and kinds" do
+      node = {:conditions, [{:a, 1}, {:b, 2}], []}
+      schema = {:tag, [], [{:attribute, [name: :*, kind: :*, min: 1], []}]}
+
+      assert :ok == Validator.validate(node, schema)
+    end
   end
 end

@@ -156,6 +156,18 @@ state name: :pending do
 end
 ```
 
+**Note**: since 0.8.0, Diesel supports generic attributes, where the name or the kind are not predefined. This can be set by using the `:*` notation:
+
+```elixir
+defmodule MyApp.MyDsl.MyTag do
+  use Diesel.Tag
+
+  tag do
+    attribute name: :*, kind: :*, min: 1
+  end
+end
+```
+
 
 #### The action tag
 
