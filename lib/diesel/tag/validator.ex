@@ -25,6 +25,8 @@ defmodule Diesel.Tag.Validator do
   end
 
   defp validate_expected_attributes(specs, attrs) do
+    specs = Enum.reject(specs, fn spec -> spec[:name] == :* end)
+
     Enum.reduce_while(specs, :ok, fn spec, _ ->
       attr_name = spec[:name]
       default = Keyword.get(spec, :default, nil)
@@ -163,10 +165,13 @@ defmodule Diesel.Tag.Validator do
   end
 
   defp expected_name?(name, specs),
-    do: Enum.find(specs, fn spec -> is_nil(spec[:name]) || spec[:name] == name end)
+    do:
+      Enum.find(specs, fn spec ->
+        is_nil(spec[:name]) || spec[:name] == :* || spec[:name] == name
+      end)
 
   defp expected_child_kind?(kind, specs) do
-    Enum.find(specs, fn spec -> spec[:kind] == :any || spec[:kind] == kind end)
+    Enum.find(specs, fn spec -> spec[:kind] in [:any, :*] || spec[:kind] == kind end)
   end
 
   defp tag_kind({_, _, _}), do: :tag
