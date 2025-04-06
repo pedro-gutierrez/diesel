@@ -51,26 +51,26 @@ defmodule Diesel.Tag.Validator do
 
   defp validate_expected_anonymous_attributes(specs, attrs) do
     specs
-    |> Enum.filter(fn spec -> spec[:name] == :* end)
-    |> then(fn
-      [] ->
-        {:ok, []}
+    |> Enum.find(&(&1[:name] == :*))
+    |> validate_expected_anonymous_attributes_using_spec(attrs)
+  end
 
-      [spec] ->
-        with validated_attrs when is_list(attrs) <-
-               Enum.reduce_while(attrs, [], fn {attr_name, attr_value}, validated_attrs ->
-                 case validate_attribute_value(spec, attr_name, attr_value) do
-                   {:ok, attr} -> {:cont, [attr | validated_attrs]}
-                   {:error, reason} -> {:halt, attribute_error(attr_name, attr_value, reason)}
-                 end
-               end),
-             do: {:ok, Enum.reverse(validated_attrs)}
-    end)
+  defp validate_expected_anonymous_attributes_using_spec(nil, _attrs), do: {:ok, []}
+
+  defp validate_expected_anonymous_attributes_using_spec(spec, attrs) do
+    with validated_attrs when is_list(validated_attrs) <-
+           Enum.reduce_while(attrs, [], fn {attr_name, attr_value}, validated_attrs ->
+             case validate_attribute_value(spec, attr_name, attr_value) do
+               {:ok, attr} -> {:cont, [attr | validated_attrs]}
+               {:error, reason} -> {:halt, attribute_error(attr_name, attr_value, reason)}
+             end
+           end),
+         do: {:ok, Enum.reverse(validated_attrs)}
   end
 
   defp validate_attribute_value(spec, attr_name, attr_value) do
+    kind = Keyword.fetch!(spec, :kind)
     default = Keyword.get(spec, :default, nil)
-    kind = Keyword.get(spec, :kind, :string)
     required = Keyword.get(spec, :required, true)
     allowed_values = Keyword.get(spec, :in, [])
     attr_value = attr_value || default
