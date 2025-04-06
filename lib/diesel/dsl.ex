@@ -57,29 +57,32 @@ defmodule Diesel.Dsl do
       def locals_without_parens, do: @locals_without_parens
 
       def validate({tag, _, children} = node) do
-        with :ok <- validate(children), do: validate_node(node)
+        with {:ok, {tag, attrs, _children}} <- validate_node(node),
+             {:ok, children} <- validate(children) do
+          {:ok, {tag, attrs, children}}
+        end
       end
 
       def validate(nodes) when is_list(nodes) do
-        Enum.reduce_while(nodes, :ok, fn node, _ ->
-          case validate(node) do
-            :ok -> {:cont, :ok}
-            error -> {:halt, error}
-          end
-        end)
+        with validated_nodes when is_list(validated_nodes) <-
+               Enum.reduce_while(nodes, [], fn node, validated_node ->
+                 case validate(node) do
+                   {:ok, node} -> {:cont, [node | validated_node]}
+                   {:error, _} = error -> {:halt, error}
+                 end
+               end),
+             do: {:ok, Enum.reverse(validated_nodes)}
       end
 
-      def validate(_), do: :ok
+      def validate(other), do: {:ok, other}
 
       defp validate_node({tag, _, _} = node) do
-        case Map.get(@tags_by_name, tag) do
-          nil ->
-            {:error, "Unsupported tag '#{inspect(tag)}'"}
-
-          tag ->
-            with {:error, reason} <- Tag.validate(tag, node) do
-              {:error, "in tag '#{Tag.name(tag)}'. #{reason}"}
-            end
+        with tag when not is_nil(tag) <- Map.get(@tags_by_name, tag),
+             {:ok, tag} <- Tag.validate(tag, node) do
+          {:ok, tag}
+        else
+          nil -> {:error, "Unsupported tag '#{inspect(tag)}'"}
+          {:error, reason} -> {:error, "in tag '#{Tag.name(tag)}'. #{reason}"}
         end
       end
 
@@ -206,8 +209,9 @@ defmodule Diesel.Dsl do
 
   @doc false
   def validate!(dsl, definition) do
-    with {:error, reason} <- dsl.validate(definition) do
-      raise "invalid syntax #{reason}"
+    case dsl.validate(definition) do
+      {:ok, definition} -> definition
+      {:error, reason} -> raise "invalid syntax #{reason}"
     end
   end
 end

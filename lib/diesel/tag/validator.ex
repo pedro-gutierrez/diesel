@@ -10,14 +10,16 @@ defmodule Diesel.Tag.Validator do
   Validates the given node, against the given schema
   """
   @spec validate(node :: tuple(), schema :: tuple()) :: :ok | {:error, any()}
-  def validate({_tag, attrs, children} = node, schema) do
+  def validate({tag, attrs, children} = node, schema) do
     attr_specs = specs(schema, :attribute)
     child_specs = specs(schema, :child)
 
-    with :ok <- validate_expected_attributes(attr_specs, attrs),
+    with {:ok, attrs} <-
+           validate_expected_attributes(attr_specs, attrs),
          :ok <- validate_unexpected_attributes(attr_specs, attrs),
-         :ok <- validate_expected_children(child_specs, children) do
-      validate_unexpected_children(child_specs, children)
+         :ok <- validate_expected_children(child_specs, children),
+         :ok <- validate_unexpected_children(child_specs, children) do
+      {:ok, {tag, attrs, children}}
     else
       {:error, reason} ->
         {:error, reason <> ". In: #{inspect(node)}"}
@@ -25,24 +27,58 @@ defmodule Diesel.Tag.Validator do
   end
 
   defp validate_expected_attributes(specs, attrs) do
+    with {:ok, named_attrs} <- validate_expected_named_attributes(specs, attrs),
+         {:ok, anonymous_attrs} <- validate_expected_anonymous_attributes(specs, attrs) do
+      {:ok, Enum.uniq(named_attrs ++ anonymous_attrs)}
+    end
+  end
+
+  defp validate_expected_named_attributes(specs, attrs) do
     specs = Enum.reject(specs, fn spec -> spec[:name] == :* end)
 
-    Enum.reduce_while(specs, :ok, fn spec, _ ->
-      attr_name = spec[:name]
-      default = Keyword.get(spec, :default, nil)
-      kind = Keyword.get(spec, :kind, :string)
-      required = Keyword.get(spec, :required, true)
-      allowed_values = Keyword.get(spec, :in, [])
-      attr_value = attrs[attr_name] || default
+    with validated_attrs when is_list(attrs) <-
+           Enum.reduce_while(specs, [], fn spec, validated_attrs ->
+             attr_name = Keyword.fetch!(spec, :name)
+             attr_value = attrs[attr_name]
 
-      with :ok <- validate_value(attr_value, kind, required),
-           :ok <- validate_allowed(attr_value, allowed_values) do
-        {:cont, :ok}
-      else
-        {:error, reason} ->
-          {:halt, attribute_error(attr_name, attr_value, reason)}
-      end
+             case validate_attribute_value(spec, attr_name, attr_value) do
+               {:ok, attr} -> {:cont, [attr | validated_attrs]}
+               {:error, reason} -> {:halt, attribute_error(attr_name, attr_value, reason)}
+             end
+           end),
+         do: {:ok, Enum.reverse(validated_attrs)}
+  end
+
+  defp validate_expected_anonymous_attributes(specs, attrs) do
+    specs
+    |> Enum.filter(fn spec -> spec[:name] == :* end)
+    |> then(fn
+      [] ->
+        {:ok, []}
+
+      [spec] ->
+        with validated_attrs when is_list(attrs) <-
+               Enum.reduce_while(attrs, [], fn {attr_name, attr_value}, validated_attrs ->
+                 case validate_attribute_value(spec, attr_name, attr_value) do
+                   {:ok, attr} -> {:cont, [attr | validated_attrs]}
+                   {:error, reason} -> {:halt, attribute_error(attr_name, attr_value, reason)}
+                 end
+               end),
+             do: {:ok, Enum.reverse(validated_attrs)}
     end)
+  end
+
+  defp validate_attribute_value(spec, attr_name, attr_value) do
+    default = Keyword.get(spec, :default, nil)
+    kind = Keyword.get(spec, :kind, :string)
+    required = Keyword.get(spec, :required, true)
+    allowed_values = Keyword.get(spec, :in, [])
+    attr_value = attr_value || default
+
+    with :ok <- validate_value(attr_value, kind, required),
+         :ok <- validate_allowed(attr_value, allowed_values) do
+      {:ok, {attr_name, attr_value}}
+    end
   end
 
   defp attribute_error(name, value, reason) do
@@ -258,7 +294,7 @@ defmodule Diesel.Tag.Validator do
     end
   end
 
-  defp specs({_, _, specs}, kind) do
+  defp specs({_, _, specs}, kind) when kind in [:attribute, :child] do
     specs
     |> Enum.reduce([], fn
       {^kind, spec, _}, acc -> [spec | acc]
