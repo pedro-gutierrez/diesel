@@ -27,7 +27,7 @@ defmodule DieselTest do
                :fsm,
                [name: "payment"],
                [
-                 {:state, [name: :pending],
+                 {:state, [name: :pending, timeout: 0],
                   [
                     {:on, [event: :created],
                      [{:action, [], [SendToGateway]}, {:next, [state: :sent], []}]}
@@ -44,8 +44,8 @@ defmodule DieselTest do
                       [{:action, [], [NotifyParties]}, {:next, [state: :declined], []}]}
                    ]
                  },
-                 {:state, [name: :accepted], []},
-                 {:state, [name: :declined], []}
+                 {:state, [name: :accepted, timeout: 0], []},
+                 {:state, [name: :declined, timeout: 0], []}
                ]
              } == Payment.definition()
     end

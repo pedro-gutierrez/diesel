@@ -14,7 +14,7 @@ defmodule Fsm.Dsl.State do
 
   tag do
     attribute :name, kind: :atom, in: [:pending, :sent, :accepted, :declined]
-    attribute :timeout, kind: :number, required: false
+    attribute :timeout, kind: :number, required: false, default: 0
     child :on, min: 0
   end
 end

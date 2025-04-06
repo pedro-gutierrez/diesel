@@ -65,9 +65,9 @@ defmodule Diesel.Dsl do
 
       def validate(nodes) when is_list(nodes) do
         with validated_nodes when is_list(validated_nodes) <-
-               Enum.reduce_while(nodes, [], fn node, validated_node ->
+               Enum.reduce_while(nodes, [], fn node, validated_nodes ->
                  case validate(node) do
-                   {:ok, node} -> {:cont, [node | validated_node]}
+                   {:ok, node} -> {:cont, [node | validated_nodes]}
                    {:error, _} = error -> {:halt, error}
                  end
                end),
@@ -78,8 +78,8 @@ defmodule Diesel.Dsl do
 
       defp validate_node({tag, _, _} = node) do
         with tag when not is_nil(tag) <- Map.get(@tags_by_name, tag),
-             {:ok, tag} <- Tag.validate(tag, node) do
-          {:ok, tag}
+             {:ok, validated_node} <- Tag.validate(tag, node) do
+          {:ok, validated_node}
         else
           nil -> {:error, "Unsupported tag '#{inspect(tag)}'"}
           {:error, reason} -> {:error, "in tag '#{Tag.name(tag)}'. #{reason}"}
