@@ -30,7 +30,7 @@ defmodule Diesel.Tag do
 
   For plain atom tags, this function will always return success.
   """
-  def validate(tag, node), do: if(structured?(tag), do: tag.validate(node), else: :ok)
+  def validate(tag, node), do: if(structured?(tag), do: tag.validate(node), else: {:ok, node})
 
   @doc """
   Returns whether a tag is structured or not
