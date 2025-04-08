@@ -87,8 +87,8 @@ defmodule Diesel do
             parsers = Module.get_attribute(mod, :parsers)
             generators = Module.get_attribute(mod, :generators)
 
-            validated_definition = Diesel.Dsl.validate!(dsl, definition)
-            Module.put_attribute(mod, :definition, validated_definition)
+            definition = Diesel.Dsl.validate!(dsl, definition)
+            Module.put_attribute(mod, :definition, definition)
 
             definition = Enum.reduce(parsers, definition, & &1.parse(&2, opts))
 
