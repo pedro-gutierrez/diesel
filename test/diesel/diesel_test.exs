@@ -27,7 +27,7 @@ defmodule DieselTest do
                :fsm,
                [name: "payment"],
                [
-                 {:state, [name: :pending, timeout: 0],
+                 {:state, [name: :pending, timeout: 1],
                   [
                     {:on, [event: :created],
                      [{:action, [], [SendToGateway]}, {:next, [state: :sent], []}]}
@@ -44,14 +44,27 @@ defmodule DieselTest do
                       [{:action, [], [NotifyParties]}, {:next, [state: :declined], []}]}
                    ]
                  },
-                 {:state, [name: :accepted, timeout: 0], []},
-                 {:state, [name: :declined, timeout: 0], []}
+                 {:state, [name: :accepted, timeout: 1], []},
+                 {:state, [name: :declined, timeout: 1], []}
                ]
              } == Payment.definition()
     end
 
     test "are used to generate code" do
       assert Payment.diagram() =~ "digraph {"
+    end
+
+    test "support default values" do
+      transitions = Payment.transitions()
+
+      sent_transitions = Enum.filter(transitions, &(&1.from == :sent))
+      non_sent_transitions = Enum.reject(transitions, &(&1.from == :sent))
+
+      refute Enum.empty?(sent_transitions)
+      refute Enum.empty?(non_sent_transitions)
+
+      assert Enum.all?(non_sent_transitions, &(&1.timeout == 1))
+      assert Enum.all?(sent_transitions, &(&1.timeout == 60))
     end
   end
 end

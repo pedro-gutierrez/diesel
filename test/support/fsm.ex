@@ -14,7 +14,7 @@ defmodule Fsm.Dsl.State do
 
   tag do
     attribute :name, kind: :atom, in: [:pending, :sent, :accepted, :declined]
-    attribute :timeout, kind: :number, required: false, default: 0
+    attribute :timeout, kind: :number, required: false, default: 1
     child :on, min: 0
   end
 end
@@ -62,7 +62,7 @@ end
 
 defmodule Transition do
   @moduledoc false
-  defstruct [:from, :to, :event, :actions]
+  defstruct [:from, :to, :event, :actions, :timeout]
 end
 
 defmodule Fsm.Parser do
@@ -78,6 +78,7 @@ defmodule Fsm.Parser do
 
       %Transition{
         from: Keyword.fetch!(state, :name),
+        timeout: Keyword.fetch!(state, :timeout),
         event: Keyword.fetch!(event, :event),
         to: next_state,
         actions: actions
@@ -131,11 +132,25 @@ defmodule Fsm.Diagram do
   end
 end
 
+defmodule Fsm.Metadata do
+  @moduledoc false
+  @behaviour Diesel.Generator
+
+  @impl true
+  def generate(transitions, _) do
+    quote do
+      @doc "Returns metadata of the state machine"
+      def transitions, do: unquote(Macro.escape(transitions))
+    end
+  end
+end
+
 defmodule Fsm do
   @moduledoc false
   use Diesel,
     otp_app: :diesel,
     generators: [
+      Fsm.Metadata,
       Fsm.Diagram
     ]
 end
