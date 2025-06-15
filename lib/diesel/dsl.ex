@@ -98,6 +98,18 @@ defmodule Diesel.Dsl do
         end
       end
 
+      defmacro unquote(root_name)(attrs) when is_list(attrs) do
+        quote do
+          @definition {unquote(@root), unquote(attrs), []}
+        end
+      end
+
+      defmacro unquote(root_name)(name) when is_binary(name) do
+        quote do
+          @definition {unquote(@root), [name: unquote(name)], []}
+        end
+      end
+
       defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) when is_list(attrs) do
         quote do
           @definition {unquote(@root), unquote(attrs), unquote(children)}
