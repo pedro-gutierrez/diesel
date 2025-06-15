@@ -67,4 +67,9 @@ defmodule DieselTest do
       assert Enum.all?(sent_transitions, &(&1.timeout == 60))
     end
   end
+
+  test "allows nodes with attributes but without children" do
+    assert {:route, [name: "/"], []} == Index.definition()
+    assert {:route, [name: "/home"], []} == Home.definition()
+  end
 end
