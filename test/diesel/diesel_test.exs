@@ -69,7 +69,8 @@ defmodule DieselTest do
   end
 
   test "allows nodes with attributes but without children" do
-    assert {:route, [name: "/"], []} == Index.definition()
-    assert {:route, [name: "/home"], []} == Home.definition()
+    assert {:route, [name: "/", method: "get"], []} == Index.definition()
+    assert {:route, [name: "/home", method: "get"], []} == Home.definition()
+    assert {:route, [name: "/orders", method: "post"], []} == CreateOrder.definition()
   end
 end
