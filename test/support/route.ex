@@ -4,6 +4,7 @@ defmodule Route.Dsl.Route do
 
   tag do
     attribute :name, kind: :string
+    attribute :method, kind: :string, default: "get"
     child :model, min: 0
     child :view, min: 0
   end
@@ -74,5 +75,13 @@ defmodule Home do
 
   use Route
 
-  route(name: "/home")
+  route("/home")
+end
+
+defmodule CreateOrder do
+  @moduledoc false
+
+  use Route
+
+  route(name: "/orders", method: "post")
 end

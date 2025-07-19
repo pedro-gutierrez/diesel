@@ -99,5 +99,15 @@ defmodule Diesel.ValidatorTest do
       schema = {:tag, [], [{:attribute, [name: :active, kind: :boolean, default: false], []}]}
       assert {:ok, {:conditions, [{:active, true}], []}} == Validator.validate(node, schema)
     end
+
+    test "detects unexpected attributes" do
+      node = {:conditions, [active: true, unexpected: "value"], []}
+      schema = {:tag, [], [{:attribute, [name: :active, kind: :boolean, default: false], []}]}
+
+      assert {:error,
+              "Unexpected attribute 'unexpected'" <>
+                ". In: {:conditions, [active: true, unexpected: \"value\"], []}"} ==
+               Validator.validate(node, schema)
+    end
   end
 end

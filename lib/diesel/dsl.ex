@@ -140,6 +140,18 @@ defmodule Diesel.Dsl do
         end
       end
 
+      defmacro unquote(root_name)(name, children) when is_list(children) do
+        if Keyword.keyword?(children) do
+          quote do
+            @definition {unquote(@root), [name: unquote(name)] ++ unquote(children), []}
+          end
+        else
+          quote do
+            @definition {unquote(@root), [name: unquote(name)], unquote(children)}
+          end
+        end
+      end
+
       defmacro unquote(root_name)(name, child) do
         quote do
           @definition {unquote(@root), [name: unquote(name)], [unquote(child)]}
