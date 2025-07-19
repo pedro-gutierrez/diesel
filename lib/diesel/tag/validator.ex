@@ -14,9 +14,8 @@ defmodule Diesel.Tag.Validator do
     attr_specs = specs(schema, :attribute)
     child_specs = specs(schema, :child)
 
-    with {:ok, attrs} <-
-           validate_expected_attributes(attr_specs, attrs),
-         :ok <- validate_unexpected_attributes(attr_specs, attrs),
+    with :ok <- validate_unexpected_attributes(attr_specs, attrs),
+         {:ok, attrs} <- validate_expected_attributes(attr_specs, attrs),
          :ok <- validate_expected_children(child_specs, children),
          :ok <- validate_unexpected_children(child_specs, children) do
       {:ok, {tag, attrs, children}}
@@ -92,6 +91,10 @@ defmodule Diesel.Tag.Validator do
           {attr_name, _} -> attr_name
           attr_name -> attr_name
         end
+
+      if attr_name == :foo do
+        IO.inspect(expected_name: expected_name?(attr_name, specs))
+      end
 
       if expected_name?(attr_name, specs) do
         {:cont, :ok}
