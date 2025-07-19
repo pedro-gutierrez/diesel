@@ -92,10 +92,6 @@ defmodule Diesel.Tag.Validator do
           attr_name -> attr_name
         end
 
-      if attr_name == :foo do
-        IO.inspect(expected_name: expected_name?(attr_name, specs))
-      end
-
       if expected_name?(attr_name, specs) do
         {:cont, :ok}
       else
