@@ -99,8 +99,14 @@ defmodule Diesel.Dsl do
       end
 
       defmacro unquote(root_name)(attrs) when is_list(attrs) do
-        quote do
-          @definition {unquote(@root), unquote(attrs), []}
+        if Keyword.keyword?(attrs) do
+          quote do
+            @definition {unquote(@root), unquote(attrs), []}
+          end
+        else
+          quote do
+            @definition {unquote(@root), [name: unquote(attrs)], []}
+          end
         end
       end
 
@@ -111,8 +117,14 @@ defmodule Diesel.Dsl do
       end
 
       defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) when is_list(attrs) do
-        quote do
-          @definition {unquote(@root), unquote(attrs), unquote(children)}
+        if Keyword.keyword?(attrs) do
+          quote do
+            @definition {unquote(@root), unquote(attrs), unquote(children)}
+          end
+        else
+          quote do
+            @definition {unquote(@root), [name: unquote(attrs)], unquote(children)}
+          end
         end
       end
 
@@ -123,8 +135,14 @@ defmodule Diesel.Dsl do
       end
 
       defmacro unquote(root_name)(attrs, do: child) when is_list(attrs) do
-        quote do
-          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        if Keyword.keyword?(attrs) do
+          quote do
+            @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+          end
+        else
+          quote do
+            @definition {unquote(@root), [name: unquote(attrs)], [unquote(child)]}
+          end
         end
       end
 
@@ -135,8 +153,14 @@ defmodule Diesel.Dsl do
       end
 
       defmacro unquote(root_name)(attrs, child) when is_list(attrs) do
-        quote do
-          @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+        if Keyword.keyword?(attrs) do
+          quote do
+            @definition {unquote(@root), unquote(attrs), [unquote(child)]}
+          end
+        else
+          quote do
+            @definition {unquote(@root), [name: unquote(attrs)], [unquote(child)]}
+          end
         end
       end
 
@@ -175,7 +199,11 @@ defmodule Diesel.Dsl do
         Enum.map(tag_names, fn tag ->
           quote do
             defmacro unquote(tag)(attrs, do: {:__block__, _, children}) when is_list(attrs) do
-              {:{}, [line: 1], [unquote(tag), attrs, children]}
+              if Keyword.keyword?(attrs) do
+                {:{}, [line: 1], [unquote(tag), attrs, children]}
+              else
+                {:{}, [line: 1], [unquote(tag), [name: attrs], children]}
+              end
             end
 
             defmacro unquote(tag)(attr, do: {:__block__, _, children}) do
@@ -187,7 +215,11 @@ defmodule Diesel.Dsl do
             end
 
             defmacro unquote(tag)(attrs, do: child) when is_list(attrs) do
-              {:{}, [line: 1], [unquote(tag), attrs, [child]]}
+              if Keyword.keyword?(attrs) do
+                {:{}, [line: 1], [unquote(tag), attrs, [child]]}
+              else
+                {:{}, [line: 1], [unquote(tag), [name: attrs], [child]]}
+              end
             end
 
             defmacro unquote(tag)(attr, do: child) do

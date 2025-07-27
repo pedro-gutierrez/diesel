@@ -5,6 +5,7 @@ defmodule Fsm.Dsl.Fsm do
   tag do
     attribute :name, kind: :string
     child :state, min: 1
+    child :states, min: 0
   end
 end
 
@@ -16,6 +17,15 @@ defmodule Fsm.Dsl.State do
     attribute :name, kind: :atom, in: [:pending, :sent, :accepted, :declined]
     attribute :timeout, kind: :number, required: false, default: 1
     child :on, min: 0
+  end
+end
+
+defmodule Fsm.Dsl.States do
+  @moduledoc false
+  use Diesel.Tag
+
+  tag do
+    attribute :name, kind: :atoms
   end
 end
 
@@ -56,7 +66,8 @@ defmodule Fsm.Dsl do
       Fsm.Dsl.Action,
       Fsm.Dsl.Next,
       Fsm.Dsl.On,
-      Fsm.Dsl.State
+      Fsm.Dsl.State,
+      Fsm.Dsl.States
     ]
 end
 

@@ -40,5 +40,8 @@ defmodule Payment do
 
     state :declined do
     end
+
+    states [:accepted, :declined] do
+    end
   end
 end

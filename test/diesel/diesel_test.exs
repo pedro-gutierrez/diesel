@@ -15,11 +15,12 @@ defmodule DieselTest do
     end
 
     test "are made of tags" do
-      assert [:fsm, :action, :next, :on, :state] == Fsm.Dsl.tags()
+      assert [:fsm, :action, :next, :on, :state, :states] == Fsm.Dsl.tags()
     end
 
     test "export their formatter configuration" do
-      assert [fsm: :*, action: :*, next: :*, on: :*, state: :*] == Fsm.Dsl.locals_without_parens()
+      assert [fsm: :*, action: :*, next: :*, on: :*, state: :*, states: :*] ==
+               Fsm.Dsl.locals_without_parens()
     end
 
     test "produce an internal definition" do
@@ -45,7 +46,8 @@ defmodule DieselTest do
                    ]
                  },
                  {:state, [name: :accepted, timeout: 1], []},
-                 {:state, [name: :declined, timeout: 1], []}
+                 {:state, [name: :declined, timeout: 1], []},
+                 {:states, [name: [:accepted, :declined]], []}
                ]
              } == Payment.definition()
     end
