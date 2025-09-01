@@ -30,7 +30,7 @@ defmodule Diesel.Dsl do
     root = opts |> Keyword.get(:root, default_root_tag) |> module_name()
     tags = Keyword.get(opts, :tags, [])
 
-    if Enum.empty?(tags), do: raise("No tags defined in #{inspect(dsl)}")
+    if Enum.empty?([root | tags]), do: raise("No tags defined in #{inspect(dsl)}")
 
     tags = tags |> Enum.map(&module_name/1) |> Enum.uniq()
     tags_by_name = Enum.reduce(tags, %{}, &Map.put(&2, Tag.name(&1), &1))

@@ -73,4 +73,10 @@ defmodule DieselTest do
     assert {:route, [name: "/home", method: "get"], []} == Home.definition()
     assert {:route, [name: "/orders", method: "post"], []} == CreateOrder.definition()
   end
+
+  test "allows dsl where only the root node is defined" do
+    assert {:form, [model: model, command: command], []} = SignUpForm.definition()
+    assert model == User
+    assert command == SignUp
+  end
 end
