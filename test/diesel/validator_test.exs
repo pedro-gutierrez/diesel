@@ -94,6 +94,22 @@ defmodule Diesel.ValidatorTest do
       assert {:ok, {:conditions, [{:in, [1, 2]}], []}} == Validator.validate(node, schema)
     end
 
+    test "validates attributes of multiple possible types" do
+      schema = {:tag, [], [{:attribute, [name: :timeout, kind: [:integer, :atom]], []}]}
+
+      node = {:state, [timeout: 5], []}
+      assert {:ok, {:state, [{:timeout, 5}], []}} == Validator.validate(node, schema)
+
+      node = {:state, [timeout: :some_timeout], []}
+      assert {:ok, {:state, [{:timeout, :some_timeout}], []}} == Validator.validate(node, schema)
+
+      node = {:state, [timeout: "invalid"], []}
+      assert {:error, reason} = Validator.validate(node, schema)
+
+      assert reason ==
+               "Error in attribute 'timeout' of value 'invalid': expected the type to be one of [:integer, :atom]. In: {:state, [timeout: \"invalid\"], []}"
+    end
+
     test "ignores default values if a value is already given" do
       node = {:conditions, [active: true], []}
       schema = {:tag, [], [{:attribute, [name: :active, kind: :boolean, default: false], []}]}
