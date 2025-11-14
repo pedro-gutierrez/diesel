@@ -319,6 +319,19 @@ defmodule Diesel.Tag.Validator do
 
   defp validate_value(value, :*, _, _default), do: {:ok, value}
 
+  defp validate_value(value, kinds, required, default) when is_list(kinds) do
+    Enum.reduce_while(
+      kinds,
+      {:error, "expected the type to be one of #{inspect(kinds)}"},
+      fn kind, error ->
+        case validate_value(value, kind, required, default) do
+          {:ok, value} -> {:halt, {:ok, value}}
+          {:error, _} -> {:cont, error}
+        end
+      end
+    )
+  end
+
   defp validate_value(value, kind, _, _default) do
     {:error, "don't know how to validate #{inspect(value)} of type #{inspect(kind)}"}
   end
