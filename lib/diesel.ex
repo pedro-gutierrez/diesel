@@ -47,7 +47,7 @@ defmodule Diesel do
     generators = opts |> Keyword.get(:generators, []) |> Enum.map(&module_name/1)
     parsers = opts |> Keyword.get(:parsers, [default_parser]) |> Enum.map(&module_name/1)
 
-    quote do
+    quote location: :keep do
       @otp_app unquote(otp_app)
       @dsl unquote(dsl)
       @overrides unquote(overrides)
@@ -62,7 +62,7 @@ defmodule Diesel do
         mod = __CALLER__.module
         opts = Keyword.put(opts, :caller_module, mod)
 
-        quote do
+        quote location: :keep do
           @behaviour Diesel
           @otp_app unquote(@otp_app)
           @dsl unquote(@dsl)
@@ -113,7 +113,7 @@ defmodule Diesel do
       end
 
       defp definition_ast do
-        quote do
+        quote location: :keep do
           @impl Diesel
           def definition, do: @definition
         end

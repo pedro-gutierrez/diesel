@@ -8,7 +8,7 @@ defmodule Diesel.Tag.Generator do
 
     tag_name = tag |> Module.split() |> List.last() |> Macro.underscore() |> String.to_atom()
 
-    quote do
+    quote location: :keep do
       alias Diesel.Tag.Validator
 
       @tag_name unquote(tag_name)

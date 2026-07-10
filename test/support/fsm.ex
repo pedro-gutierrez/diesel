@@ -125,7 +125,7 @@ defmodule Fsm.Diagram do
     }
     """
 
-    quote do
+    quote location: :keep do
       @doc "Returns a diagram of the state machine in Graphviz format"
       def diagram, do: unquote(diagram)
     end
@@ -138,7 +138,7 @@ defmodule Fsm.Metadata do
 
   @impl true
   def generate(transitions, _) do
-    quote do
+    quote location: :keep do
       @doc "Returns metadata of the state machine"
       def transitions, do: unquote(Macro.escape(transitions))
     end
