@@ -39,7 +39,7 @@ defmodule Diesel.Dsl do
     tag_names = tag_names -- [root_name]
     tags_by_name = Map.put(tags_by_name, root_name, root)
 
-    quote do
+    quote location: :keep do
       @root unquote(root_name)
       @tag_names unquote(tag_names)
       @all_tags_names [@root | @tag_names]
@@ -86,94 +86,94 @@ defmodule Diesel.Dsl do
         end
       end
 
-      defmacro unquote(root_name)(do: {:__block__, [], children}) do
-        quote do
+      defmacro unquote(root_name)(do: {:__block__, _, children}) do
+        quote location: :keep do
           @definition {unquote(@root), [], unquote(children)}
         end
       end
 
       defmacro unquote(root_name)(do: child) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), [], [unquote(child)]}
         end
       end
 
       defmacro unquote(root_name)(attrs) when is_list(attrs) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), unquote(attrs), []}
         end
       end
 
       defmacro unquote(root_name)(name) when is_binary(name) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), [name: unquote(name)], []}
         end
       end
 
-      defmacro unquote(root_name)(attrs, do: {:__block__, [], children}) when is_list(attrs) do
-        quote do
+      defmacro unquote(root_name)(attrs, do: {:__block__, _, children}) when is_list(attrs) do
+        quote location: :keep do
           @definition {unquote(@root), unquote(attrs), unquote(children)}
         end
       end
 
-      defmacro unquote(root_name)(name, do: {:__block__, [], children}) do
-        quote do
+      defmacro unquote(root_name)(name, do: {:__block__, _, children}) do
+        quote location: :keep do
           @definition {unquote(@root), [name: unquote(name)], unquote(children)}
         end
       end
 
       defmacro unquote(root_name)(attrs, do: child) when is_list(attrs) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), unquote(attrs), [unquote(child)]}
         end
       end
 
       defmacro unquote(root_name)(name, do: child) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), [name: unquote(name)], [unquote(child)]}
         end
       end
 
       defmacro unquote(root_name)(attrs, child) when is_list(attrs) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), unquote(attrs), [unquote(child)]}
         end
       end
 
       defmacro unquote(root_name)(name, children) when is_list(children) do
         if Keyword.keyword?(children) do
-          quote do
+          quote location: :keep do
             @definition {unquote(@root), [name: unquote(name)] ++ unquote(children), []}
           end
         else
-          quote do
+          quote location: :keep do
             @definition {unquote(@root), [name: unquote(name)], unquote(children)}
           end
         end
       end
 
       defmacro unquote(root_name)(name, child) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), [name: unquote(name)], [unquote(child)]}
         end
       end
 
-      defmacro unquote(root_name)(name, attrs, do: {:__block__, [], children}) do
-        quote do
+      defmacro unquote(root_name)(name, attrs, do: {:__block__, _, children}) do
+        quote location: :keep do
           @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)),
                        unquote(children)}
         end
       end
 
       defmacro unquote(root_name)(name, attrs, do: child) do
-        quote do
+        quote location: :keep do
           @definition {unquote(@root), unquote(Keyword.put(attrs, :name, name)), [unquote(child)]}
         end
       end
 
       unquote_splicing(
         Enum.map(tag_names, fn tag ->
-          quote do
+          quote location: :keep do
             defmacro unquote(tag)(attrs, do: {:__block__, _, children}) when is_list(attrs) do
               {:{}, [line: 1], [unquote(tag), attrs, children]}
             end

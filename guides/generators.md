@@ -23,7 +23,7 @@ defmodule MyApp.Fsm.Generator.GenServer do
 
   @impl true
   def generate(definition, _opts) do
-    quote do
+    quote location: :keep do
       use GenServer
       ...
     end

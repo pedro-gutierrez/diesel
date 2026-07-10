@@ -204,7 +204,7 @@ defmodule MyApp.Schema.EctoGenerator do
   def generate(definition, _opts) do
     tables = get_in(definition, [:parsed_tables])
     
-    quote do
+    quote location: :keep do
       # Generate Ecto schema modules
       unquote_splicing(generate_schemas(tables))
       
@@ -217,7 +217,7 @@ defmodule MyApp.Schema.EctoGenerator do
 
   defp generate_schemas(tables) do
     Enum.map(tables, fn table ->
-      quote do
+      quote location: :keep do
         defmodule unquote(Module.concat(__MODULE__, table.name)) do
           use Ecto.Schema
           
